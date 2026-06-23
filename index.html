@@ -613,6 +613,10 @@
         <div class="wizard-card-body">
           <h2 class="step-title">What's your source framerate?</h2>
           <div class="opt-grid cols-4" id="fps-options" role="group" aria-label="Source framerate"></div>
+          <button type="button" id="fps-unsure-btn" class="opt-btn" style="width:100%; margin-top:0.6rem; text-align:center;">
+            <span class="opt-title">Not Sure? Continue</span>
+            <span class="opt-sub" style="text-transform:none; letter-spacing:0; font-family:var(--sans); font-size:0.78rem; color:var(--mid-grey); margin-top:0.25rem;">Use "Same as Source" — HandBrake will match the input file automatically</span>
+          </button>
         </div>
       </div>
 
@@ -734,6 +738,7 @@
   ];
 
   const FPS_OPTIONS = [23.976, 24, 25, 29.97, 30, 50, 59.94, 60];
+  const FPS_SAME = 'Same as Source';
 
   // High / Mid / Low — unambiguous quality-vs-size scale
   const TIERS = [
@@ -788,6 +793,8 @@
   }
 
   function fmtBitrate(kbps) { return kbps.toLocaleString() + ' kbps'; }
+
+  function fpsDisplay(fps) { return fps === FPS_SAME ? FPS_SAME : `${fps} fps`; }
 
   function fmtBytes(mb) {
     if (mb >= 1024) return (mb / 1024).toFixed(2) + ' GB';
@@ -911,7 +918,12 @@
         f + ' frames per second'
       ));
     });
+    document.getElementById('fps-unsure-btn').classList.toggle('selected', state.fps === FPS_SAME);
   }
+  document.getElementById('fps-unsure-btn').addEventListener('click', () => {
+    state.fps = FPS_SAME;
+    goToStep(4);
+  });
 
   function renderStep4() {
     const wrap = document.getElementById('goal-options');
@@ -979,7 +991,7 @@
     if (state.sourceResKey) {
       parts.push(state.sourceResKey === 'custom' ? `${state.sourceW}×${state.sourceH}` : RES_PRESETS.find(r => r.key === state.sourceResKey).label);
     }
-    if (state.fps) parts.push(state.fps + ' fps');
+    if (state.fps) parts.push(fpsDisplay(state.fps));
     if (state.goal === 'keep') parts.push('Keep resolution');
     if (state.goal === 'downscale' && state.targetResKey) parts.push('Downscale to ' + RES_PRESETS.find(r => r.key === state.targetResKey).label);
     document.getElementById('answer-trail').innerHTML = parts
@@ -1038,7 +1050,7 @@
     const grid = document.getElementById('settings-grid');
     const rows = [
       ['Resolution', currentSettings.resolution],
-      ['Framerate', `${state.fps} fps — Constant Framerate (CFR)`],
+      ['Framerate', `${fpsDisplay(state.fps)} — Constant Framerate (CFR)`],
       ['Video Codec', 'H.264 (x264)'],
       ['Rate Control', 'Average Bitrate (ABR), 2-pass recommended'],
       ['Video Bitrate', fmtBitrate(videoKbps)],
@@ -1068,7 +1080,7 @@
     const text = [
       `HandBrake Settings (${currentSettings.tierLabel})`,
       `Resolution: ${currentSettings.resolution}`,
-      `Framerate: ${currentSettings.fps} fps (Constant Framerate / CFR)`,
+      `Framerate: ${fpsDisplay(currentSettings.fps)} (Constant Framerate / CFR)`,
       `Video Codec: H.264 (x264)`,
       `Rate Control: Average Bitrate (ABR), 2-pass recommended`,
       `Video Bitrate: ${currentSettings.videoKbps} kbps`,
