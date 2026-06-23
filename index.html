@@ -570,10 +570,21 @@
     <!-- Wizard Card -->
     <section class="wizard-card" aria-label="Configuration wizard">
 
-      <!-- Step 1: Source Resolution -->
+      <!-- Step 1: Priority -->
       <div id="step-1" class="step-section">
         <div class="wizard-card-header">
           <p class="eyebrow">Step 1 of 4</p>
+        </div>
+        <div class="wizard-card-body">
+          <h2 class="step-title">Quality vs. file size priority?</h2>
+          <div class="opt-grid cols-3" id="tier-options" role="group" aria-label="Quality tier"></div>
+        </div>
+      </div>
+
+      <!-- Step 2: Source Resolution -->
+      <div id="step-2" class="step-section hidden">
+        <div class="wizard-card-header">
+          <p class="eyebrow">Step 2 of 4</p>
         </div>
         <div class="wizard-card-body">
           <h2 class="step-title">What's your source resolution?</h2>
@@ -593,10 +604,10 @@
         </div>
       </div>
 
-      <!-- Step 2: Framerate -->
-      <div id="step-2" class="step-section hidden">
+      <!-- Step 3: Framerate -->
+      <div id="step-3" class="step-section hidden">
         <div class="wizard-card-header">
-          <p class="eyebrow">Step 2 of 4</p>
+          <p class="eyebrow">Step 3 of 4</p>
         </div>
         <div class="wizard-card-body">
           <h2 class="step-title">What's your source framerate?</h2>
@@ -604,10 +615,10 @@
         </div>
       </div>
 
-      <!-- Step 3: Goal -->
-      <div id="step-3" class="step-section hidden">
+      <!-- Step 4: Goal -->
+      <div id="step-4" class="step-section hidden">
         <div class="wizard-card-header">
-          <p class="eyebrow">Step 3 of 4</p>
+          <p class="eyebrow">Step 4 of 4</p>
         </div>
         <div class="wizard-card-body">
           <h2 class="step-title">What's your goal?</h2>
@@ -616,17 +627,6 @@
             <label class="field-label" id="target-res-label">Downscale to</label>
             <div class="opt-grid cols-3" id="target-res-options" role="group" aria-labelledby="target-res-label"></div>
           </div>
-        </div>
-      </div>
-
-      <!-- Step 4: Priority -->
-      <div id="step-4" class="step-section hidden">
-        <div class="wizard-card-header">
-          <p class="eyebrow">Step 4 of 4</p>
-        </div>
-        <div class="wizard-card-body">
-          <h2 class="step-title">Quality vs. file size priority?</h2>
-          <div class="opt-grid cols-3" id="tier-options" role="group" aria-label="Quality tier"></div>
         </div>
       </div>
 
@@ -837,6 +837,27 @@
   }
 
   function renderStep1() {
+    const wrap = document.getElementById('tier-options');
+    wrap.innerHTML = '';
+    TIERS.forEach(t => {
+      const bars = Array.from({ length: 3 }, (_, i) =>
+        `<div class="level-bar${i < t.bars ? ' filled' : ''}"></div>`
+      ).join('');
+      wrap.appendChild(optionButton(
+        `<div class="tier-card">
+          <div class="level-bars" aria-hidden="true">${bars}</div>
+          <span class="tier-badge">${t.badge}</span>
+          <div class="opt-title">${t.label}</div>
+          <div class="opt-sub" style="text-transform:none; letter-spacing:0; font-family:var(--sans); font-size:0.8rem; color:var(--mid-grey); margin-top:0.35rem;">${t.desc}</div>
+        </div>`,
+        state.tierKey === t.key,
+        () => { state.tierKey = t.key; goToStep(2); },
+        `${t.badge} quality tier: ${t.label}, ${t.desc}`
+      ));
+    });
+  }
+
+  function renderStep2() {
     const wrap = document.getElementById('res-options');
     wrap.innerHTML = '';
     RES_PRESETS.slice(0, 3).forEach(r => {
@@ -848,7 +869,7 @@
           state.sourceW = r.w;
           state.sourceH = r.h;
           document.getElementById('custom-res-inputs').classList.add('hidden');
-          goToStep(2);
+          goToStep(3);
         }
       ));
     });
@@ -869,7 +890,7 @@
     state.sourceResKey = 'custom';
     state.sourceW = w;
     state.sourceH = h;
-    goToStep(2);
+    goToStep(3);
   }
   document.getElementById('custom-res-confirm').addEventListener('click', confirmCustomRes);
   ['custom-w', 'custom-h'].forEach(id => {
@@ -878,20 +899,20 @@
     });
   });
 
-  function renderStep2() {
+  function renderStep3() {
     const wrap = document.getElementById('fps-options');
     wrap.innerHTML = '';
     FPS_OPTIONS.forEach(f => {
       wrap.appendChild(optionButton(
         `<div class="opt-title" style="text-align:center;">${f}</div>`,
         state.fps === f,
-        () => { state.fps = f; goToStep(3); },
+        () => { state.fps = f; goToStep(4); },
         f + ' frames per second'
       ));
     });
   }
 
-  function renderStep3() {
+  function renderStep4() {
     const wrap = document.getElementById('goal-options');
     wrap.innerHTML = '';
     wrap.appendChild(optionButton(
@@ -901,7 +922,7 @@
         state.goal = 'keep';
         state.targetResKey = null;
         document.getElementById('downscale-target-wrap').classList.add('hidden');
-        goToStep(4);
+        showResults();
       }
     ));
     wrap.appendChild(optionButton(
@@ -909,7 +930,7 @@
       state.goal === 'downscale',
       () => {
         state.goal = 'downscale';
-        renderStep3();
+        renderStep4();
         renderTargetResOptions();
         document.getElementById('downscale-target-wrap').classList.remove('hidden');
       }
@@ -934,28 +955,7 @@
       wrap.appendChild(optionButton(
         `<div class="opt-title">${r.label}</div><div class="opt-sub">${r.sub}</div>`,
         state.targetResKey === r.key,
-        () => { state.targetResKey = r.key; goToStep(4); }
-      ));
-    });
-  }
-
-  function renderStep4() {
-    const wrap = document.getElementById('tier-options');
-    wrap.innerHTML = '';
-    TIERS.forEach(t => {
-      const bars = Array.from({ length: 3 }, (_, i) =>
-        `<div class="level-bar${i < t.bars ? ' filled' : ''}"></div>`
-      ).join('');
-      wrap.appendChild(optionButton(
-        `<div class="tier-card">
-          <div class="level-bars" aria-hidden="true">${bars}</div>
-          <span class="tier-badge">${t.badge}</span>
-          <div class="opt-title">${t.label}</div>
-          <div class="opt-sub" style="text-transform:none; letter-spacing:0; font-family:var(--sans); font-size:0.8rem; color:var(--mid-grey); margin-top:0.35rem;">${t.desc}</div>
-        </div>`,
-        state.tierKey === t.key,
-        () => { state.tierKey = t.key; showResults(); },
-        `${t.badge} quality tier: ${t.label}, ${t.desc}`
+        () => { state.targetResKey = r.key; showResults(); }
       ));
     });
   }
@@ -974,13 +974,13 @@
 
   function renderAnswerTrail() {
     const parts = [];
+    if (state.tierKey) parts.push(TIERS.find(t => t.key === state.tierKey).label);
     if (state.sourceResKey) {
       parts.push(state.sourceResKey === 'custom' ? `${state.sourceW}×${state.sourceH}` : RES_PRESETS.find(r => r.key === state.sourceResKey).label);
     }
     if (state.fps) parts.push(state.fps + ' fps');
     if (state.goal === 'keep') parts.push('Keep resolution');
     if (state.goal === 'downscale' && state.targetResKey) parts.push('Downscale to ' + RES_PRESETS.find(r => r.key === state.targetResKey).label);
-    if (state.tierKey) parts.push(TIERS.find(t => t.key === state.tierKey).label);
     document.getElementById('answer-trail').innerHTML = parts
       .map(p => `<span class="val">${p}</span>`)
       .join('<span class="sep">&middot;</span>');
