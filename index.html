@@ -602,6 +602,10 @@
             </div>
             <button id="custom-res-confirm" class="btn-primary">Use</button>
           </div>
+          <button type="button" id="res-unknown-btn" class="opt-btn" style="width:100%; margin-top:0.6rem; text-align:center;">
+            <span class="opt-title">Don't Know? Continue</span>
+            <span class="opt-sub" style="text-transform:none; letter-spacing:0; font-family:var(--sans); font-size:0.78rem; color:var(--mid-grey); margin-top:0.25rem;">We'll ask for your final resolution directly instead of a downscale target</span>
+          </button>
         </div>
       </div>
 
@@ -626,7 +630,7 @@
           <p class="eyebrow">Step 4 of 4</p>
         </div>
         <div class="wizard-card-body">
-          <h2 class="step-title">What's your goal?</h2>
+          <h2 class="step-title" id="step4-title">What's your goal?</h2>
           <div class="opt-grid" id="goal-options" role="group" aria-label="Resolution goal"></div>
           <div id="downscale-target-wrap" class="hidden" style="margin-top:1.1rem;">
             <label class="field-label" id="target-res-label">Downscale to</label>
@@ -890,7 +894,15 @@
         document.getElementById('custom-w').focus();
       }
     ));
+    document.getElementById('res-unknown-btn').classList.toggle('selected', state.sourceResKey === 'unknown');
   }
+  document.getElementById('res-unknown-btn').addEventListener('click', () => {
+    state.sourceResKey = 'unknown';
+    state.sourceW = null;
+    state.sourceH = null;
+    document.getElementById('custom-res-inputs').classList.add('hidden');
+    goToStep(3);
+  });
 
   function confirmCustomRes() {
     const w = parseInt(document.getElementById('custom-w').value, 10);
@@ -927,40 +939,71 @@
   });
 
   function renderStep4() {
-    const wrap = document.getElementById('goal-options');
-    wrap.innerHTML = '';
-    wrap.appendChild(optionButton(
+    const goalWrap = document.getElementById('goal-options');
+    const targetWrap = document.getElementById('downscale-target-wrap');
+    const titleEl = document.getElementById('step4-title');
+    const targetLabel = document.getElementById('target-res-label');
+
+    if (state.sourceResKey === 'unknown') {
+      // Source resolution unknown — nothing to "keep," so skip straight to
+      // picking a concrete final resolution. That choice alone drives the
+      // bitrate, so no guessing is needed downstream.
+      titleEl.textContent = 'What resolution do you want the final file to be?';
+      goalWrap.style.display = 'none';
+      goalWrap.innerHTML = '';
+      targetLabel.textContent = 'Final resolution';
+      targetWrap.classList.remove('hidden');
+      renderTargetResOptions();
+      return;
+    }
+
+    titleEl.textContent = "What's your goal?";
+    goalWrap.style.display = '';
+    goalWrap.innerHTML = '';
+    targetLabel.textContent = 'Downscale to';
+    goalWrap.appendChild(optionButton(
       `<div class="opt-title">Keep Original Resolution</div><div class="opt-sub">Just compress, don't resize</div>`,
       state.goal === 'keep',
       () => {
         state.goal = 'keep';
         state.targetResKey = null;
-        document.getElementById('downscale-target-wrap').classList.add('hidden');
+        targetWrap.classList.add('hidden');
         showResults();
       }
     ));
-    wrap.appendChild(optionButton(
+    goalWrap.appendChild(optionButton(
       `<div class="opt-title">Downscale to Save Space</div><div class="opt-sub">Reduce resolution before editing</div>`,
       state.goal === 'downscale',
       () => {
         state.goal = 'downscale';
         renderStep4();
         renderTargetResOptions();
-        document.getElementById('downscale-target-wrap').classList.remove('hidden');
+        targetWrap.classList.remove('hidden');
       }
     ));
 
     if (state.goal === 'downscale') {
       renderTargetResOptions();
-      document.getElementById('downscale-target-wrap').classList.remove('hidden');
+      targetWrap.classList.remove('hidden');
+    } else {
+      targetWrap.classList.add('hidden');
     }
   }
 
   function renderTargetResOptions() {
     const wrap = document.getElementById('target-res-options');
     wrap.innerHTML = '';
-    const sourceHeight = state.sourceResKey === 'custom' ? state.sourceH : RES_PRESETS.find(r => r.key === state.sourceResKey).h;
-    const choices = RES_PRESETS.filter(r => r.h < sourceHeight);
+    wrap.classList.toggle('cols-4', state.sourceResKey === 'unknown');
+    wrap.classList.toggle('cols-3', state.sourceResKey !== 'unknown');
+
+    let choices;
+    if (state.sourceResKey === 'unknown') {
+      choices = RES_PRESETS;
+    } else {
+      const sourceHeight = state.sourceResKey === 'custom' ? state.sourceH : RES_PRESETS.find(r => r.key === state.sourceResKey).h;
+      choices = RES_PRESETS.filter(r => r.h < sourceHeight);
+    }
+
     if (choices.length === 0) {
       wrap.innerHTML = '<p style="color:var(--light-grey); grid-column: 1 / -1; margin:0;">No smaller standard resolution than your source — try a custom value or keep original.</p>';
       return;
@@ -969,7 +1012,7 @@
       wrap.appendChild(optionButton(
         `<div class="opt-title">${r.label}</div><div class="opt-sub">${r.sub}</div>`,
         state.targetResKey === r.key,
-        () => { state.targetResKey = r.key; showResults(); }
+        () => { state.targetResKey = r.key; state.goal = 'downscale'; showResults(); }
       ));
     });
   }
@@ -990,11 +1033,16 @@
     const parts = [];
     if (state.tierKey) parts.push(TIERS.find(t => t.key === state.tierKey).label);
     if (state.sourceResKey) {
-      parts.push(state.sourceResKey === 'custom' ? `${state.sourceW}×${state.sourceH}` : RES_PRESETS.find(r => r.key === state.sourceResKey).label);
+      if (state.sourceResKey === 'custom') parts.push(`${state.sourceW}×${state.sourceH}`);
+      else if (state.sourceResKey === 'unknown') parts.push('Source: Unknown');
+      else parts.push(RES_PRESETS.find(r => r.key === state.sourceResKey).label);
     }
     if (state.fps) parts.push(fpsDisplay(state.fps));
     if (state.goal === 'keep') parts.push('Keep resolution');
-    if (state.goal === 'downscale' && state.targetResKey) parts.push('Downscale to ' + RES_PRESETS.find(r => r.key === state.targetResKey).label);
+    if (state.goal === 'downscale' && state.targetResKey) {
+      const targetLabel = RES_PRESETS.find(r => r.key === state.targetResKey).label;
+      parts.push(state.sourceResKey === 'unknown' ? `Final: ${targetLabel}` : `Downscale to ${targetLabel}`);
+    }
     document.getElementById('answer-trail').innerHTML = parts
       .map(p => `<span class="val">${p}</span>`)
       .join('<span class="sep">&middot;</span>');
