@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Handbrake Configuration Wizard</title>
+<style>
+  @font-face {
+    font-family: 'GM Sans';
+    src: url('https://www.theglobeandmail.com/files/dev/www/cache-long/fonts/GMsans-Web-Regular.woff2?v=3') format('woff2');
+    font-weight: 400; font-style: normal; font-display: swap;
+  }
+  @font-face {
+    font-family: 'GM Sans Label';
+    src: url('https://www.theglobeandmail.com/files/dev/www/cache-long/fonts/GMsans-Web-Label.woff2?v=3') format('woff2');
+    font-weight: 400; font-style: normal; font-display: swap;
+  }
+  @font-face {
+    font-family: 'Pratt';
+    src: url('https://www.theglobeandmail.com/files/dev/www/cache-long/fonts/Pratt-Nova.woff2?v=3') format('woff2');
+    font-weight: 400; font-style: normal; font-display: swap;
+  }
+  @font-face {
+    font-family: 'Pratt';
+    src: url('https://www.theglobeandmail.com/files/dev/www/cache-long/fonts/Pratt-Bold.woff2?v=3') format('woff2');
+    font-weight: 700; font-style: normal; font-display: swap;
+  }
+
+  :root {
+    --black:          #000000;
+    --near-black:     #1a1a1a;
+    --dark-grey:      #333333;
+    --mid-grey:       #595959;
+    --light-grey:     #767676;
+    --rule-grey:      #d4d4d4;
+    --bg-grey:        #f2f2f2;
+    --white:          #ffffff;
+
+    --globe-red:      #b21000;
+    --globe-red-dark: #8a0d00;
+
+    --callout-red-bg:   #faf5f5;
+    --nav-active-bg:    #fdf5f5;
+    --neutral-bg:       #f5f7fa;
+    --card-bg:          #fafafa;
+    --success:           #2e7d32;
+
+    --serif: 'Pratt', Georgia, 'Times New Roman', serif;
+    --sans:  'GM Sans', 'Helvetica Neue', Arial, sans-serif;
+    --label: 'GM Sans Label', 'GM Sans', 'Helvetica Neue', Arial, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body { margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--sans);
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    color: var(--near-black);
+    background: var(--white);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrapper {
+    max-width: 1100px;
+    margin: 0 auto;
+    border-left: 1px solid var(--rule-grey);
+    border-right: 1px solid var(--rule-grey);
+    padding: 0 2.5rem 6rem;
+  }
+
+  @media (max-width: 680px) {
+    .wrapper { border-left: none; border-right: none; padding: 0 1.1rem 4rem; }
+  }
+
+  a { color: var(--globe-red); }
+
+  /* Masthead */
+  .masthead {
+    border-bottom: 4px solid var(--black);
+    position: relative;
+    padding: 2.25rem 0 1.5rem;
+    margin-bottom: 2.5rem;
+  }
+  .masthead::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; bottom: -4px;
+    height: 1px;
+    background: var(--rule-grey);
+  }
+
+  .eyebrow {
+    font-family: var(--label);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.75rem;
+    color: var(--globe-red);
+    margin: 0 0 0.6rem;
+  }
+
+  .headline {
+    font-family: var(--serif);
+    font-weight: 700;
+    font-size: 2rem;
+    line-height: 1.15;
+    margin: 0 0 0.85rem;
+    color: var(--black);
+  }
+  @media (max-width: 680px) { .headline { font-size: 1.6rem; } }
+
+  .lede {
+    font-family: var(--sans);
+    color: var(--mid-grey);
+    max-width: 62ch;
+    margin: 0 0 1.25rem;
+  }
+
+  /* Buttons */
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--globe-red);
+    color: var(--white);
+    font-family: var(--label);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.78rem;
+    border: none;
+    padding: 0.62rem 1rem;
+    min-height: 44px;
+    cursor: pointer;
+    text-decoration: none;
+  }
+  .btn-primary:hover { background: var(--globe-red-dark); }
+  .btn-primary.is-success { background: var(--success); }
+
+  .btn-text {
+    display: inline-flex;
+    align-items: center;
+    background: none;
+    border: none;
+    font-family: var(--label);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: 0.78rem;
+    color: var(--mid-grey);
+    padding: 0.6rem 0.4rem;
+    min-height: 44px;
+    cursor: pointer;
+  }
+  .btn-text:hover { color: var(--near-black); }
+  .btn-text svg { width: 1rem; height: 1rem; }
+
+  .wizard-toolbar {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 0.5rem;
+  }
+  .btn-text-quiet {
+    background: none;
+    border: none;
+    font-family: var(--label);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: 0.7rem;
+    color: var(--light-grey);
+    padding: 0.5rem 0.2rem;
+    min-height: 44px;
+    cursor: pointer;
+  }
+  .btn-text-quiet:hover { color: var(--globe-red); }
+
+  /* Answer breadcrumb */
+  .answer-trail {
+    font-family: var(--label);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.72rem;
+    color: var(--light-grey);
+    margin: 0 0 0.6rem;
+    min-height: 1em;
+  }
+  .answer-trail .sep { margin: 0 0.4em; color: var(--rule-grey); }
+  .answer-trail .val { color: var(--globe-red); }
+
+  /* Progress */
+  .progress-track {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 1.75rem;
+  }
+  .progress-seg {
+    flex: 1;
+    height: 4px;
+    background: var(--rule-grey);
+  }
+  .progress-seg.filled { background: var(--globe-red); }
+
+  /* Wizard card */
+  .wizard-card {
+    border: 1px solid var(--rule-grey);
+    background: var(--card-bg);
+    margin-bottom: 2.5rem;
+  }
+  .wizard-card-header {
+    background: var(--white);
+    padding: 0.7rem 1.25rem;
+    border-bottom: 1px solid var(--rule-grey);
+  }
+  .wizard-card-body { padding: 1.5rem 1.25rem; }
+
+  .step-section.hidden { display: none; }
+
+  .step-title {
+    font-family: var(--serif);
+    font-weight: 700;
+    font-size: 1.3rem;
+    margin: 0.2rem 0 1.1rem;
+    color: var(--black);
+  }
+
+  /* Option grids */
+  .opt-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.6rem;
+  }
+  .opt-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+  .opt-grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
+  @media (max-width: 560px) {
+    .opt-grid.cols-3, .opt-grid.cols-4 { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  .opt-btn {
+    text-align: left;
+    border: 1px solid var(--rule-grey);
+    background: var(--bg-grey);
+    padding: 0.8rem 0.95rem;
+    min-height: 44px;
+    cursor: pointer;
+    font-family: var(--sans);
+    color: var(--near-black);
+  }
+  .opt-btn:hover { background: #ececec; border-color: var(--light-grey); }
+  .opt-btn.selected {
+    background: var(--nav-active-bg);
+    box-shadow: inset 3px 0 0 0 var(--globe-red);
+  }
+  .opt-title { font-weight: 700; font-size: 0.92rem; }
+  .opt-sub {
+    font-family: var(--label);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.68rem;
+    color: var(--light-grey);
+    margin-top: 0.25rem;
+  }
+  .opt-btn.selected .opt-sub { color: var(--globe-red); }
+  .opt-btn.selected .opt-title { color: var(--globe-red); }
+
+  /* Tier (level) cards — High / Mid / Low */
+  .tier-card { padding: 1rem 1rem 1.1rem; }
+  .level-bars { display: flex; gap: 3px; margin-bottom: 0.55rem; }
+  .level-bar { width: 16px; height: 6px; background: var(--rule-grey); }
+  .level-bar.filled { background: var(--near-black); }
+  .opt-btn.selected .level-bar.filled { background: var(--globe-red); }
+
+  .tier-badge {
+    display: inline-block;
+    font-family: var(--label);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 0.68rem;
+    border: 1px solid var(--near-black);
+    color: var(--near-black);
+    padding: 0.15rem 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+  .opt-btn.selected .tier-badge {
+    border-color: var(--globe-red);
+    background: var(--globe-red);
+    color: var(--white);
+  }
+
+  /* Custom resolution inputs */
+  .custom-row { display: flex; align-items: center; gap: 0.6rem; margin-top: 0.9rem; }
+  .custom-row.hidden { display: none; }
+  .sr-only {
+    position: absolute; width: 1px; height: 1px;
+    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+  }
+
+  input[type="number"], input[type="text"] {
+    font-family: var(--sans);
+    font-size: 0.9rem;
+    border: 1px solid var(--rule-grey);
+    background: var(--white);
+    padding: 0.6rem 0.7rem;
+    min-height: 44px;
+    color: var(--near-black);
+  }
+  .input-w { width: 6.5rem; }
+  .input-full { width: 100%; }
+
+  label.field-label {
+    display: block;
+    font-family: var(--label);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: 0.72rem;
+    color: var(--light-grey);
+    margin-bottom: 0.45rem;
+  }
+
+  /* Footer nav row */
+  .wizard-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1.5rem;
+    padding-top: 1.1rem;
+    border-top: 1px solid var(--rule-grey);
+  }
+
+  /* Results */
+  .section-title {
+    font-family: var(--serif);
+    font-weight: 700;
+    font-size: 1.45rem;
+    margin: 0 0 0.25rem;
+  }
+  .section-sub { color: var(--mid-grey); margin: 0 0 1.1rem; }
+
+  .results.hidden { display: none; }
+
+  .card { border: 1px solid var(--rule-grey); background: var(--card-bg); margin-bottom: 1.25rem; }
+  .card-header {
+    background: var(--white);
+    padding: 0.7rem 1.25rem;
+    border-bottom: 1px solid var(--rule-grey);
+  }
+  .card-header .eyebrow { margin: 0; }
+  .card-body { padding: 1.25rem; }
+
+  .settings-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.6rem;
+    margin-bottom: 1.1rem;
+  }
+  @media (max-width: 560px) { .settings-grid { grid-template-columns: 1fr; } }
+
+  .setting-row {
+    border: 1px solid var(--rule-grey);
+    background: var(--white);
+    padding: 0.7rem 0.9rem;
+  }
+  .setting-label {
+    font-family: var(--label);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: 0.68rem;
+    color: var(--globe-red);
+  }
+  .setting-value { font-weight: 700; font-size: 0.9rem; margin-top: 0.2rem; }
+
+  /* Callouts */
+  .callout {
+    border-left: 3px solid var(--near-black);
+    background: var(--neutral-bg);
+    padding: 1rem 1.1rem;
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1.75rem;
+  }
+  .callout.accent { border-left-color: var(--globe-red); background: var(--callout-red-bg); }
+  .callout-icon { flex-shrink: 0; margin-top: 0.1rem; }
+  .callout-eyebrow {
+    display: block;
+    font-family: var(--label);
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    color: var(--globe-red);
+    margin-bottom: 0.3rem;
+  }
+  .callout p { margin: 0; color: var(--near-black); }
+
+  /* Calculator */
+  .calc-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+  @media (max-width: 560px) { .calc-grid { grid-template-columns: 1fr; } }
+
+  .stat-box {
+    background: var(--neutral-bg);
+    border: 1px solid var(--rule-grey);
+    border-left: 3px solid var(--globe-red);
+    padding: 1rem 1.1rem;
+  }
+  .stat-label {
+    font-family: var(--label);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: 0.7rem;
+    color: var(--light-grey);
+    margin: 0 0 0.3rem;
+  }
+  .stat-value { font-family: var(--serif); font-weight: 700; font-size: 1.6rem; margin: 0; color: var(--black); }
+  .stat-note { font-size: 0.78rem; color: var(--light-grey); margin: 0.35rem 0 0; }
+
+  /* Preset reference cards */
+  .preset-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.9rem;
+  }
+  @media (max-width: 760px) { .preset-grid { grid-template-columns: 1fr; } }
+
+  .preset-card { border: 1px solid var(--rule-grey); background: var(--card-bg); display: flex; flex-direction: column; }
+  .preset-card-header { background: var(--white); padding: 0.65rem 1rem; border-bottom: 1px solid var(--rule-grey); }
+  .preset-card-body { padding: 0.9rem 1rem 1.1rem; flex: 1; }
+  .preset-title { font-weight: 700; font-size: 0.95rem; margin: 0; }
+  .preset-sub { font-size: 0.78rem; color: var(--mid-grey); margin: 0.2rem 0 0; }
+  .preset-list { list-style: none; margin: 0; padding: 0; font-size: 0.82rem; color: var(--dark-grey); }
+  .preset-list li {
+    padding: 0.4rem 0;
+    border-bottom: 1px solid var(--rule-grey);
+  }
+  .preset-list li:last-child { border-bottom: none; }
+
+  /* Collapsible presets disclosure */
+  .presets-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    list-style: none;
+    font-family: var(--label);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: 0.78rem;
+    color: var(--globe-red);
+    padding: 0.7rem 0;
+    min-height: 44px;
+  }
+  .presets-toggle::-webkit-details-marker { display: none; }
+  .presets-toggle .chevron {
+    transition: transform 0.15s ease;
+    flex-shrink: 0;
+  }
+  details[open] .presets-toggle .chevron { transform: rotate(90deg); }
+  .presets-body { padding-top: 0.5rem; }
+
+  /* HandBrake UI mockups — illustrative only, not 1:1 */
+  .mockup-disclaimer {
+    font-size: 0.78rem;
+    color: var(--mid-grey);
+    font-style: italic;
+    margin: 0 0 1rem;
+  }
+  .app-mockup {
+    border: 1px solid var(--rule-grey);
+    background: var(--white);
+  }
+  .app-mockup + .app-mockup { margin-top: 0.75rem; }
+  .app-mockup-bar {
+    background: #e7e7e7;
+    border-bottom: 1px solid var(--rule-grey);
+    padding: 0.4rem 0.75rem;
+    font-family: var(--label);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-size: 0.68rem;
+    color: var(--dark-grey);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .app-mockup-bar .badge-rep {
+    font-style: normal;
+    color: var(--globe-red);
+    border: 1px solid var(--globe-red);
+    padding: 0.05rem 0.4rem;
+    letter-spacing: 0.04em;
+  }
+  .app-tabs { display: flex; background: #f6f6f6; border-bottom: 1px solid var(--rule-grey); overflow-x: auto; }
+  .app-tab {
+    padding: 0.4rem 0.7rem;
+    font-family: var(--label);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    font-size: 0.64rem;
+    color: var(--light-grey);
+    border-right: 1px solid var(--rule-grey);
+    white-space: nowrap;
+  }
+  .app-tab.active { background: var(--white); color: var(--near-black); font-weight: 700; }
+  .app-mockup-body { padding: 0.7rem 0.85rem; }
+  .mockup-row {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    padding: 0.3rem 0;
+    font-size: 0.8rem;
+  }
+  .mockup-label {
+    width: 8rem;
+    flex-shrink: 0;
+    color: var(--mid-grey);
+    font-size: 0.74rem;
+  }
+  .mockup-control { color: var(--near-black); }
+  .mockup-control strong { color: var(--globe-red); }
+
+  /* Footer */
+  .page-footer {
+    border-top: 1px solid var(--rule-grey);
+    margin-top: 2.5rem;
+    padding-top: 1.25rem;
+    text-align: center;
+    font-family: var(--label);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.72rem;
+    color: var(--light-grey);
+  }
+
+  /* Focus */
+  :focus-visible {
+    outline: 3px solid var(--globe-red);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .opt-btn, .btn-primary, .btn-text { transition: background-color 0.12s ease, box-shadow 0.12s ease; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrapper">
+
+  <header class="masthead">
+    <p class="eyebrow">Video Workflow Tool</p>
+    <h1 class="headline">Handbrake Configuration Wizard</h1>
+    <p class="lede">
+      Answer a few questions to get tuned settings to compress your video using the HandBrake app.
+    </p>
+    <a class="btn-primary" href="https://handbrake.fr/downloads.php" target="_blank" rel="noopener" aria-label="Download HandBrake from the official site">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+      Download HandBrake
+    </a>
+  </header>
+
+  <main>
+
+    <div class="wizard-toolbar">
+      <button id="reset-btn" class="btn-text-quiet">Start Over</button>
+    </div>
+    <p class="answer-trail" id="answer-trail" aria-live="polite"></p>
+    <nav class="progress-track" aria-label="Wizard progress" id="progress-track"></nav>
+
+    <!-- Wizard Card -->
+    <section class="wizard-card" aria-label="Configuration wizard">
+
+      <!-- Step 1: Source Resolution -->
+      <div id="step-1" class="step-section">
+        <div class="wizard-card-header">
+          <p class="eyebrow">Step 1 of 4</p>
+        </div>
+        <div class="wizard-card-body">
+          <h2 class="step-title">What's your source resolution?</h2>
+          <div class="opt-grid cols-4" id="res-options" role="group" aria-label="Source resolution"></div>
+          <div id="custom-res-inputs" class="custom-row hidden">
+            <div>
+              <label class="sr-only" for="custom-w">Custom width in pixels</label>
+              <input id="custom-w" type="number" class="input-w" placeholder="Width" />
+            </div>
+            <span aria-hidden="true">&times;</span>
+            <div>
+              <label class="sr-only" for="custom-h">Custom height in pixels</label>
+              <input id="custom-h" type="number" class="input-w" placeholder="Height" />
+            </div>
+            <button id="custom-res-confirm" class="btn-primary">Use</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Framerate -->
+      <div id="step-2" class="step-section hidden">
+        <div class="wizard-card-header">
+          <p class="eyebrow">Step 2 of 4</p>
+        </div>
+        <div class="wizard-card-body">
+          <h2 class="step-title">What's your source framerate?</h2>
+          <div class="opt-grid cols-4" id="fps-options" role="group" aria-label="Source framerate"></div>
+        </div>
+      </div>
+
+      <!-- Step 3: Goal -->
+      <div id="step-3" class="step-section hidden">
+        <div class="wizard-card-header">
+          <p class="eyebrow">Step 3 of 4</p>
+        </div>
+        <div class="wizard-card-body">
+          <h2 class="step-title">What's your goal?</h2>
+          <div class="opt-grid" id="goal-options" role="group" aria-label="Resolution goal"></div>
+          <div id="downscale-target-wrap" class="hidden" style="margin-top:1.1rem;">
+            <label class="field-label" id="target-res-label">Downscale to</label>
+            <div class="opt-grid cols-3" id="target-res-options" role="group" aria-labelledby="target-res-label"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4: Priority -->
+      <div id="step-4" class="step-section hidden">
+        <div class="wizard-card-header">
+          <p class="eyebrow">Step 4 of 4</p>
+        </div>
+        <div class="wizard-card-body">
+          <h2 class="step-title">Quality vs. file size priority?</h2>
+          <div class="opt-grid cols-3" id="tier-options" role="group" aria-label="Quality tier"></div>
+        </div>
+      </div>
+
+      <div class="wizard-card-body" style="padding-top:0;">
+        <div class="wizard-footer">
+          <button id="back-btn" class="btn-text hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
+            Back
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Results -->
+    <section id="results" class="results hidden" aria-label="Recommended settings">
+      <h2 class="section-title">Your Recommended Settings</h2>
+      <p class="section-sub">Based on your answers — apply these in HandBrake's Video and Audio tabs.</p>
+
+      <div class="card">
+        <div class="card-header"><p class="eyebrow">Recommended Configuration</p></div>
+        <div class="card-body">
+          <div id="settings-grid" class="settings-grid"></div>
+          <button id="copy-settings" class="btn-primary">Copy as Text</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><p class="eyebrow">Where to Enter These Settings</p></div>
+        <div class="card-body">
+          <p class="mockup-disclaimer">
+            Illustrative mockup of HandBrake's layout, built from memory — not a 1:1 screenshot. Field
+            names and positions may differ slightly depending on your HandBrake version.
+          </p>
+          <div id="mockup-output"></div>
+        </div>
+      </div>
+
+      <div class="callout accent">
+        <svg class="callout-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M5.07 19h13.86c1.54 0 2.5-1.67 1.73-3L13.73 4c-.77-1.33-2.69-1.33-3.46 0L3.34 16c-.77 1.33.19 3 1.73 3z" /></svg>
+        <div>
+          <span class="callout-eyebrow">CFR Required</span>
+          <p>
+            <strong>Constant Framerate (CFR) is mandatory.</strong> In HandBrake's Video tab, set
+            Framerate (FPS) to your source value and select <strong>Constant Framerate</strong> — not
+            Variable or Peak. Variable framerate causes audio drift once the file hits Final Cut Pro's timeline.
+          </p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><p class="eyebrow">Estimate Output</p></div>
+        <div class="card-body">
+          <label class="field-label" for="duration-input">Source duration (minutes)</label>
+          <input id="duration-input" type="number" min="0" step="0.5" placeholder="e.g. 45" value="30" class="input-full" style="margin-bottom:1.1rem;" />
+
+          <div class="calc-grid">
+            <div class="stat-box">
+              <p class="stat-label">Estimated File Size</p>
+              <p id="filesize-output" class="stat-value">—</p>
+              <p class="stat-note">(video + audio bitrate) ÷ 8 × duration</p>
+            </div>
+            <div class="stat-box">
+              <p class="stat-label">Estimated Processing Time</p>
+              <p id="time-output" class="stat-value">—</p>
+              <p class="stat-note">rough ETA on a modern CPU, software encode</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Reference Presets -->
+    <details aria-label="Quick reference presets">
+      <summary class="presets-toggle">
+        <svg class="chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+        Quick Reference Presets
+      </summary>
+      <div class="presets-body">
+        <p class="section-sub">Three common starting points if you'd rather skip the wizard. All use H.264, ABR, and CFR.</p>
+        <p class="mockup-disclaimer">Each card includes an illustrative mockup of HandBrake's layout — not a 1:1 screenshot.</p>
+        <div class="preset-grid" id="preset-cards"></div>
+      </div>
+    </details>
+
+  </main>
+
+  <footer class="page-footer">
+    Built for the compress &rarr; Final Cut Pro &rarr; publish workflow &middot;
+    <a href="https://handbrake.fr/downloads.php" target="_blank" rel="noopener">Get HandBrake</a>
+  </footer>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---------- Data ----------
+  const RES_PRESETS = [
+    { key: '4k',    label: '4K UHD',  sub: '3840×2160', w: 3840, h: 2160 },
+    { key: '1080p', label: '1080p',   sub: '1920×1080', w: 1920, h: 1080 },
+    { key: '720p',  label: '720p',    sub: '1280×720',  w: 1280, h: 720 },
+    { key: '480p',  label: '480p',    sub: '854×480',   w: 854,  h: 480 },
+  ];
+
+  const FPS_OPTIONS = [23.976, 24, 25, 29.97, 30, 50, 59.94, 60];
+
+  // High / Mid / Low — unambiguous quality-vs-size scale
+  const TIERS = [
+    {
+      key: 'high', badge: 'High', label: 'High Quality', desc: 'Larger files, slowest encode', bars: 3,
+      video: { '4k': 40000, '1080p': 14000, '720p': 8000, '480p': 4000 }, audio: 192, presetSpeed: 'Slower',
+    },
+    {
+      key: 'mid', badge: 'Mid', label: 'Balanced', desc: 'Moderate size, medium speed', bars: 2,
+      video: { '4k': 20000, '1080p': 8000, '720p': 5000, '480p': 2500 }, audio: 160, presetSpeed: 'Medium',
+    },
+    {
+      key: 'low', badge: 'Low', label: 'Small', desc: 'Smallest files, fastest encode', bars: 1,
+      video: { '4k': 12000, '1080p': 5000, '720p': 3000, '480p': 1500 }, audio: 128, presetSpeed: 'Fast',
+    },
+  ];
+
+  const PROCESSING_MULTIPLIER = { '4k': 3, '1080p': 1.5, '720p': 1, '480p': 0.7 };
+
+  // ---------- State ----------
+  const state = {
+    step: 1,
+    sourceResKey: null,
+    sourceW: null,
+    sourceH: null,
+    fps: null,
+    goal: null,
+    targetResKey: null,
+    tierKey: null,
+  };
+
+  const TOTAL_STEPS = 4;
+
+  // ---------- Helpers ----------
+  function nearestBucket(h) {
+    if (h >= 2160) return '4k';
+    if (h >= 1080) return '1080p';
+    if (h >= 720) return '720p';
+    return '480p';
+  }
+
+  function finalResolution() {
+    if (state.goal === 'downscale' && state.targetResKey) {
+      const r = RES_PRESETS.find(r => r.key === state.targetResKey);
+      return { w: r.w, h: r.h, bucket: r.key };
+    }
+    if (state.sourceResKey === 'custom') {
+      return { w: state.sourceW, h: state.sourceH, bucket: nearestBucket(state.sourceH) };
+    }
+    const r = RES_PRESETS.find(r => r.key === state.sourceResKey);
+    return { w: r.w, h: r.h, bucket: r.key };
+  }
+
+  function fmtBitrate(kbps) { return kbps.toLocaleString() + ' kbps'; }
+
+  function fmtBytes(mb) {
+    if (mb >= 1024) return (mb / 1024).toFixed(2) + ' GB';
+    return mb.toFixed(1) + ' MB';
+  }
+
+  function appMockupHTML({ fps, videoKbps, audioKbps, presetSpeed }) {
+    return `
+      <div class="app-mockup">
+        <div class="app-mockup-bar"><span>HandBrake — Video Tab</span><span class="badge-rep">Representation</span></div>
+        <div class="app-tabs">
+          <span class="app-tab">Dimensions</span><span class="app-tab">Filters</span>
+          <span class="app-tab active">Video</span><span class="app-tab">Audio</span><span class="app-tab">Subtitles</span>
+        </div>
+        <div class="app-mockup-body">
+          <div class="mockup-row"><span class="mockup-label">Video Encoder</span><span class="mockup-control">H.264 (x264) ▾</span></div>
+          <div class="mockup-row"><span class="mockup-label">Framerate (FPS)</span><span class="mockup-control"><strong>${fps}</strong> ▾ &nbsp; ● Constant Framerate</span></div>
+          <div class="mockup-row"><span class="mockup-label">Quality</span><span class="mockup-control">● Avg Bitrate (kbps): <strong>${videoKbps.toLocaleString()}</strong></span></div>
+          <div class="mockup-row"><span class="mockup-label"></span><span class="mockup-control">☑ 2-Pass Encoding</span></div>
+          <div class="mockup-row"><span class="mockup-label">Encoder Preset</span><span class="mockup-control"><strong>${presetSpeed}</strong></span></div>
+        </div>
+      </div>
+      <div class="app-mockup">
+        <div class="app-mockup-bar"><span>HandBrake — Audio Tab</span><span class="badge-rep">Representation</span></div>
+        <div class="app-tabs">
+          <span class="app-tab">Dimensions</span><span class="app-tab">Filters</span>
+          <span class="app-tab">Video</span><span class="app-tab active">Audio</span><span class="app-tab">Subtitles</span>
+        </div>
+        <div class="app-mockup-body">
+          <div class="mockup-row"><span class="mockup-label">Codec</span><span class="mockup-control">AAC (avcodec) ▾</span></div>
+          <div class="mockup-row"><span class="mockup-label">Mixdown</span><span class="mockup-control">Stereo ▾</span></div>
+          <div class="mockup-row"><span class="mockup-label">Bitrate (kbps)</span><span class="mockup-control"><strong>${audioKbps}</strong> ▾</span></div>
+        </div>
+      </div>
+    `;
+  }
+
+  // ---------- Render: option buttons ----------
+  function optionButton(innerHtml, selected, onClick, label) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'opt-btn' + (selected ? ' selected' : '');
+    btn.setAttribute('aria-pressed', selected ? 'true' : 'false');
+    if (label) btn.setAttribute('aria-label', label);
+    btn.innerHTML = innerHtml;
+    btn.addEventListener('click', onClick);
+    return btn;
+  }
+
+  function renderStep1() {
+    const wrap = document.getElementById('res-options');
+    wrap.innerHTML = '';
+    RES_PRESETS.slice(0, 3).forEach(r => {
+      wrap.appendChild(optionButton(
+        `<div class="opt-title">${r.label}</div><div class="opt-sub">${r.sub}</div>`,
+        state.sourceResKey === r.key,
+        () => {
+          state.sourceResKey = r.key;
+          state.sourceW = r.w;
+          state.sourceH = r.h;
+          document.getElementById('custom-res-inputs').classList.add('hidden');
+          goToStep(2);
+        }
+      ));
+    });
+    wrap.appendChild(optionButton(
+      `<div class="opt-title">Custom</div><div class="opt-sub">Enter resolution</div>`,
+      state.sourceResKey === 'custom',
+      () => {
+        document.getElementById('custom-res-inputs').classList.remove('hidden');
+        document.getElementById('custom-w').focus();
+      }
+    ));
+  }
+
+  function confirmCustomRes() {
+    const w = parseInt(document.getElementById('custom-w').value, 10);
+    const h = parseInt(document.getElementById('custom-h').value, 10);
+    if (!w || !h) return;
+    state.sourceResKey = 'custom';
+    state.sourceW = w;
+    state.sourceH = h;
+    goToStep(2);
+  }
+  document.getElementById('custom-res-confirm').addEventListener('click', confirmCustomRes);
+  ['custom-w', 'custom-h'].forEach(id => {
+    document.getElementById(id).addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); confirmCustomRes(); }
+    });
+  });
+
+  function renderStep2() {
+    const wrap = document.getElementById('fps-options');
+    wrap.innerHTML = '';
+    FPS_OPTIONS.forEach(f => {
+      wrap.appendChild(optionButton(
+        `<div class="opt-title" style="text-align:center;">${f}</div>`,
+        state.fps === f,
+        () => { state.fps = f; goToStep(3); },
+        f + ' frames per second'
+      ));
+    });
+  }
+
+  function renderStep3() {
+    const wrap = document.getElementById('goal-options');
+    wrap.innerHTML = '';
+    wrap.appendChild(optionButton(
+      `<div class="opt-title">Keep Original Resolution</div><div class="opt-sub">Just compress, don't resize</div>`,
+      state.goal === 'keep',
+      () => {
+        state.goal = 'keep';
+        state.targetResKey = null;
+        document.getElementById('downscale-target-wrap').classList.add('hidden');
+        goToStep(4);
+      }
+    ));
+    wrap.appendChild(optionButton(
+      `<div class="opt-title">Downscale to Save Space</div><div class="opt-sub">Reduce resolution before editing</div>`,
+      state.goal === 'downscale',
+      () => {
+        state.goal = 'downscale';
+        renderStep3();
+        renderTargetResOptions();
+        document.getElementById('downscale-target-wrap').classList.remove('hidden');
+      }
+    ));
+
+    if (state.goal === 'downscale') {
+      renderTargetResOptions();
+      document.getElementById('downscale-target-wrap').classList.remove('hidden');
+    }
+  }
+
+  function renderTargetResOptions() {
+    const wrap = document.getElementById('target-res-options');
+    wrap.innerHTML = '';
+    const sourceHeight = state.sourceResKey === 'custom' ? state.sourceH : RES_PRESETS.find(r => r.key === state.sourceResKey).h;
+    const choices = RES_PRESETS.filter(r => r.h < sourceHeight);
+    if (choices.length === 0) {
+      wrap.innerHTML = '<p style="color:var(--light-grey); grid-column: 1 / -1; margin:0;">No smaller standard resolution than your source — try a custom value or keep original.</p>';
+      return;
+    }
+    choices.forEach(r => {
+      wrap.appendChild(optionButton(
+        `<div class="opt-title">${r.label}</div><div class="opt-sub">${r.sub}</div>`,
+        state.targetResKey === r.key,
+        () => { state.targetResKey = r.key; goToStep(4); }
+      ));
+    });
+  }
+
+  function renderStep4() {
+    const wrap = document.getElementById('tier-options');
+    wrap.innerHTML = '';
+    TIERS.forEach(t => {
+      const bars = Array.from({ length: 3 }, (_, i) =>
+        `<div class="level-bar${i < t.bars ? ' filled' : ''}"></div>`
+      ).join('');
+      wrap.appendChild(optionButton(
+        `<div class="tier-card">
+          <div class="level-bars" aria-hidden="true">${bars}</div>
+          <span class="tier-badge">${t.badge}</span>
+          <div class="opt-title">${t.label}</div>
+          <div class="opt-sub" style="text-transform:none; letter-spacing:0; font-family:var(--sans); font-size:0.8rem; color:var(--mid-grey); margin-top:0.35rem;">${t.desc}</div>
+        </div>`,
+        state.tierKey === t.key,
+        () => { state.tierKey = t.key; showResults(); },
+        `${t.badge} quality tier: ${t.label}, ${t.desc}`
+      ));
+    });
+  }
+
+  // ---------- Navigation ----------
+  function renderProgress() {
+    const track = document.getElementById('progress-track');
+    track.innerHTML = '';
+    track.setAttribute('aria-label', `Step ${state.step} of ${TOTAL_STEPS}`);
+    for (let i = 1; i <= TOTAL_STEPS; i++) {
+      const seg = document.createElement('div');
+      seg.className = 'progress-seg' + (i <= state.step ? ' filled' : '');
+      track.appendChild(seg);
+    }
+  }
+
+  function renderAnswerTrail() {
+    const parts = [];
+    if (state.sourceResKey) {
+      parts.push(state.sourceResKey === 'custom' ? `${state.sourceW}×${state.sourceH}` : RES_PRESETS.find(r => r.key === state.sourceResKey).label);
+    }
+    if (state.fps) parts.push(state.fps + ' fps');
+    if (state.goal === 'keep') parts.push('Keep resolution');
+    if (state.goal === 'downscale' && state.targetResKey) parts.push('Downscale to ' + RES_PRESETS.find(r => r.key === state.targetResKey).label);
+    if (state.tierKey) parts.push(TIERS.find(t => t.key === state.tierKey).label);
+    document.getElementById('answer-trail').innerHTML = parts
+      .map(p => `<span class="val">${p}</span>`)
+      .join('<span class="sep">&middot;</span>');
+  }
+
+  function goToStep(n) {
+    state.step = n;
+    for (let i = 1; i <= TOTAL_STEPS; i++) {
+      document.getElementById('step-' + i).classList.toggle('hidden', i !== n);
+    }
+    document.getElementById('back-btn').classList.toggle('hidden', n === 1);
+    document.getElementById('results').classList.add('hidden');
+    renderProgress();
+    renderAnswerTrail();
+    if (n === 1) renderStep1();
+    if (n === 2) renderStep2();
+    if (n === 3) renderStep3();
+    if (n === 4) renderStep4();
+    document.querySelector('.wizard-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  document.getElementById('back-btn').addEventListener('click', () => {
+    if (state.step > 1) goToStep(state.step - 1);
+  });
+
+  document.getElementById('reset-btn').addEventListener('click', () => {
+    const hasProgress = state.sourceResKey || state.fps || state.goal || state.tierKey;
+    if (hasProgress && !window.confirm('Start over? Your current answers will be cleared.')) return;
+    state.sourceResKey = null; state.sourceW = null; state.sourceH = null;
+    state.fps = null; state.goal = null; state.targetResKey = null; state.tierKey = null;
+    document.getElementById('custom-res-inputs').classList.add('hidden');
+    document.getElementById('downscale-target-wrap').classList.add('hidden');
+    goToStep(1);
+  });
+
+  // ---------- Results ----------
+  let currentSettings = null;
+
+  function showResults() {
+    const tier = TIERS.find(t => t.key === state.tierKey);
+    const res = finalResolution();
+    const videoKbps = tier.video[res.bucket];
+    const audioKbps = tier.audio;
+
+    currentSettings = {
+      resolution: `${res.w}×${res.h}`,
+      fps: state.fps,
+      videoKbps, audioKbps,
+      bucket: res.bucket,
+      presetSpeed: tier.presetSpeed,
+      tierLabel: `${tier.label} (${tier.badge})`,
+    };
+
+    const grid = document.getElementById('settings-grid');
+    const rows = [
+      ['Resolution', currentSettings.resolution],
+      ['Framerate', `${state.fps} fps — Constant Framerate (CFR)`],
+      ['Video Codec', 'H.264 (x264)'],
+      ['Rate Control', 'Average Bitrate (ABR), 2-pass recommended'],
+      ['Video Bitrate', fmtBitrate(videoKbps)],
+      ['Audio', `AAC, ${audioKbps} kbps, Stereo`],
+      ['Encoder Speed Preset', tier.presetSpeed],
+      ['Quality Tier', currentSettings.tierLabel],
+    ];
+    grid.innerHTML = rows.map(([k, v]) => `
+      <div class="setting-row">
+        <p class="setting-label">${k}</p>
+        <p class="setting-value">${v}</p>
+      </div>
+    `).join('');
+
+    document.getElementById('mockup-output').innerHTML = appMockupHTML({
+      fps: state.fps, videoKbps, audioKbps, presetSpeed: tier.presetSpeed,
+    });
+
+    document.getElementById('results').classList.remove('hidden');
+    renderAnswerTrail();
+    runCalculator();
+    document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  document.getElementById('copy-settings').addEventListener('click', () => {
+    if (!currentSettings) return;
+    const text = [
+      `HandBrake Settings (${currentSettings.tierLabel})`,
+      `Resolution: ${currentSettings.resolution}`,
+      `Framerate: ${currentSettings.fps} fps (Constant Framerate / CFR)`,
+      `Video Codec: H.264 (x264)`,
+      `Rate Control: Average Bitrate (ABR), 2-pass recommended`,
+      `Video Bitrate: ${currentSettings.videoKbps} kbps`,
+      `Audio: AAC, ${currentSettings.audioKbps} kbps, Stereo`,
+      `Encoder Speed Preset: ${currentSettings.presetSpeed}`,
+    ].join('\n');
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('copy-settings');
+      const original = btn.textContent;
+      btn.textContent = 'Copied!';
+      btn.classList.add('is-success');
+      setTimeout(() => { btn.textContent = original; btn.classList.remove('is-success'); }, 1500);
+    });
+  });
+
+  // ---------- Calculator ----------
+  function runCalculator() {
+    if (!currentSettings) return;
+    const minutes = parseFloat(document.getElementById('duration-input').value) || 0;
+    const seconds = minutes * 60;
+    const totalKbps = currentSettings.videoKbps + currentSettings.audioKbps;
+    const totalKB = (totalKbps / 8) * seconds;
+    const totalMB = totalKB / 1024;
+    document.getElementById('filesize-output').textContent = minutes > 0 ? fmtBytes(totalMB) : '—';
+
+    const multiplier = PROCESSING_MULTIPLIER[currentSettings.bucket];
+    const estMinutes = minutes * multiplier;
+    let timeStr = '—';
+    if (minutes > 0) {
+      if (estMinutes < 1) timeStr = Math.round(estMinutes * 60) + ' sec';
+      else if (estMinutes < 60) timeStr = estMinutes.toFixed(1) + ' min';
+      else timeStr = (estMinutes / 60).toFixed(1) + ' hr';
+      timeStr += ` (~${multiplier}x real-time)`;
+    }
+    document.getElementById('time-output').textContent = timeStr;
+  }
+
+  document.getElementById('duration-input').addEventListener('input', runCalculator);
+
+  // ---------- Reference Presets ----------
+  function renderPresets() {
+    const presets = [
+      {
+        badge: 'High', title: 'High Quality',
+        sub: 'Source resolution kept — larger files, slowest encode',
+        lines: ['Resolution: Source (e.g. 1920×1080 or 3840×2160)', 'Video Bitrate: 14,000 kbps (1080p) / 40,000 kbps (4K)', 'Codec: H.264, ABR, 2-pass', 'Framerate: Source fps, CFR', 'Audio: AAC 192 kbps'],
+        mockup: { fps: 'Source', videoKbps: 14000, audioKbps: 192, presetSpeed: 'Slower' },
+      },
+      {
+        badge: 'Mid', title: 'Balanced',
+        sub: '4K source downscaled to 1080p — everyday editing footage',
+        lines: ['Resolution: 1920×1080', 'Video Bitrate: 8,000 kbps', 'Codec: H.264, ABR, 2-pass', 'Framerate: Source fps, CFR', 'Audio: AAC 160 kbps'],
+        mockup: { fps: 'Source', videoKbps: 8000, audioKbps: 160, presetSpeed: 'Medium' },
+      },
+      {
+        badge: 'Low', title: 'Small',
+        sub: '4K source downscaled to 720p — extreme space-saving only',
+        lines: ['Resolution: 1280×720', 'Video Bitrate: 3,000 kbps', 'Codec: H.264, ABR, 2-pass', 'Framerate: Source fps, CFR', 'Audio: AAC 128 kbps'],
+        mockup: { fps: 'Source', videoKbps: 3000, audioKbps: 128, presetSpeed: 'Fast' },
+      },
+    ];
+    const wrap = document.getElementById('preset-cards');
+    wrap.innerHTML = presets.map(p => `
+      <div class="preset-card">
+        <div class="preset-card-header">
+          <span class="tier-badge">${p.badge}</span>
+          <h3 class="preset-title">${p.title}</h3>
+          <p class="preset-sub">${p.sub}</p>
+        </div>
+        <div class="preset-card-body">
+          <ul class="preset-list">
+            ${p.lines.map(l => `<li>${l}</li>`).join('')}
+          </ul>
+          ${appMockupHTML(p.mockup)}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // ---------- Init ----------
+  renderPresets();
+  goToStep(1);
+})();
+</script>
+</body>
+</html>
