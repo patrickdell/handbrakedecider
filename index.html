@@ -5,26 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Handbrake Configuration Wizard</title>
 <style>
-  @font-face {
-    font-family: 'GM Sans';
-    src: url('https://www.theglobeandmail.com/files/dev/www/cache-long/fonts/GMsans-Web-Regular.woff2?v=3') format('woff2');
-    font-weight: 400; font-style: normal; font-display: swap;
-  }
-  @font-face {
-    font-family: 'GM Sans Label';
-    src: url('https://www.theglobeandmail.com/files/dev/www/cache-long/fonts/GMsans-Web-Label.woff2?v=3') format('woff2');
-    font-weight: 400; font-style: normal; font-display: swap;
-  }
-  @font-face {
-    font-family: 'Pratt';
-    src: url('https://www.theglobeandmail.com/files/dev/www/cache-long/fonts/Pratt-Nova.woff2?v=3') format('woff2');
-    font-weight: 400; font-style: normal; font-display: swap;
-  }
-  @font-face {
-    font-family: 'Pratt';
-    src: url('https://www.theglobeandmail.com/files/dev/www/cache-long/fonts/Pratt-Bold.woff2?v=3') format('woff2');
-    font-weight: 700; font-style: normal; font-display: swap;
-  }
+  /*
+   * No external font CDN — this tool must work fully offline (file://, no
+   * network). System UI font stacks substitute for the licensed Globe and
+   * Mail typefaces (Pratt/GM Sans) that the directory's branding convention
+   * otherwise mandates; only the font-family *values* are overridden here,
+   * not the variable names or the rest of the visual language.
+   */
 
   :root {
     --black:          #000000;
@@ -45,9 +32,39 @@
     --card-bg:          #fafafa;
     --success:           #2e7d32;
 
-    --serif: 'Pratt', Georgia, 'Times New Roman', serif;
-    --sans:  'GM Sans', 'Helvetica Neue', Arial, sans-serif;
-    --label: 'GM Sans Label', 'GM Sans', 'Helvetica Neue', Arial, sans-serif;
+    --mockup-chrome-bg: #e7e7e7;
+    --mockup-tabs-bg:    #f6f6f6;
+    --opt-hover-bg:      #ececec;
+
+    --serif: Georgia, 'Times New Roman', serif;
+    --sans:  system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --label: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --black:          #f2f2f2;
+      --near-black:     #ececec;
+      --dark-grey:      #cfcfcf;
+      --mid-grey:       #a3a3a3;
+      --light-grey:     #8a8a8a;
+      --rule-grey:      #3a3a3a;
+      --bg-grey:        #1c1c1c;
+      --white:          #121212;
+
+      --globe-red:      #ff5a47;
+      --globe-red-dark: #ff7d6c;
+
+      --callout-red-bg:   #2a1815;
+      --nav-active-bg:    #261513;
+      --neutral-bg:       #1a1d22;
+      --card-bg:          #181818;
+      --success:           #4caf50;
+
+      --mockup-chrome-bg: #242424;
+      --mockup-tabs-bg:    #1e1e1e;
+      --opt-hover-bg:      #262626;
+    }
   }
 
   * { box-sizing: border-box; }
@@ -245,7 +262,7 @@
     font-family: var(--sans);
     color: var(--near-black);
   }
-  .opt-btn:hover { background: #ececec; border-color: var(--light-grey); }
+  .opt-btn:hover { background: var(--opt-hover-bg); border-color: var(--light-grey); }
   .opt-btn.selected {
     background: var(--nav-active-bg);
     box-shadow: inset 3px 0 0 0 var(--globe-red);
@@ -287,8 +304,18 @@
   }
 
   /* Custom resolution inputs */
-  .custom-row { display: flex; align-items: center; gap: 0.6rem; margin-top: 0.9rem; }
+  .custom-row { display: flex; align-items: center; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.9rem; }
   .custom-row.hidden { display: none; }
+  @media (max-width: 400px) {
+    #custom-res-confirm { flex: 1 1 100%; }
+  }
+  .field-error {
+    color: var(--globe-red);
+    font-size: 0.78rem;
+    margin: 0.5rem 0 0;
+    flex: 1 1 100%;
+  }
+  .field-error.hidden { display: none; }
   .sr-only {
     position: absolute; width: 1px; height: 1px;
     overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
@@ -415,6 +442,9 @@
   .stat-value { font-family: var(--serif); font-weight: 700; font-size: 1.6rem; margin: 0; color: var(--black); }
   .stat-note { font-size: 0.78rem; color: var(--light-grey); margin: 0.35rem 0 0; }
 
+  /* Results-screen toggles (Purpose / Hardware / Audio) */
+  .toggle-row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.2rem; }
+
   /* Preset reference cards */
   .preset-grid {
     display: grid;
@@ -471,7 +501,7 @@
   }
   .app-mockup + .app-mockup { margin-top: 0.75rem; }
   .app-mockup-bar {
-    background: #e7e7e7;
+    background: var(--mockup-chrome-bg);
     border-bottom: 1px solid var(--rule-grey);
     padding: 0.4rem 0.75rem;
     font-family: var(--label);
@@ -490,7 +520,7 @@
     padding: 0.05rem 0.4rem;
     letter-spacing: 0.04em;
   }
-  .app-tabs { display: flex; background: #f6f6f6; border-bottom: 1px solid var(--rule-grey); overflow-x: auto; }
+  .app-tabs { display: flex; background: var(--mockup-tabs-bg); border-bottom: 1px solid var(--rule-grey); overflow-x: auto; }
   .app-tab {
     padding: 0.4rem 0.7rem;
     font-family: var(--label);
@@ -541,6 +571,14 @@
   @media (prefers-reduced-motion: no-preference) {
     .opt-btn, .btn-primary, .btn-text { transition: background-color 0.12s ease, box-shadow 0.12s ease; }
   }
+
+  /*
+   * Generic fallback for any element toggled via classList that doesn't have
+   * its own scoped `.<component>.hidden` rule (e.g. #back-btn,
+   * #downscale-target-wrap) — placed last so it wins cascade ties against
+   * earlier equal-specificity single-class rules like .btn-text.
+   */
+  .hidden { display: none; }
 </style>
 </head>
 <body>
@@ -593,14 +631,15 @@
           <div id="custom-res-inputs" class="custom-row hidden">
             <div>
               <label class="sr-only" for="custom-w">Custom width in pixels</label>
-              <input id="custom-w" type="number" class="input-w" placeholder="Width" />
+              <input id="custom-w" type="number" class="input-w" placeholder="Width" min="1" step="1" />
             </div>
             <span aria-hidden="true">&times;</span>
             <div>
               <label class="sr-only" for="custom-h">Custom height in pixels</label>
-              <input id="custom-h" type="number" class="input-w" placeholder="Height" />
+              <input id="custom-h" type="number" class="input-w" placeholder="Height" min="1" step="1" />
             </div>
             <button id="custom-res-confirm" class="btn-primary">Use</button>
+            <p id="custom-res-error" class="field-error hidden" role="alert">Enter whole numbers greater than 0 for both width and height.</p>
           </div>
           <button type="button" id="res-unknown-btn" class="opt-btn" style="width:100%; margin-top:0.6rem; text-align:center;">
             <span class="opt-title">Don't Know? Continue</span>
@@ -659,6 +698,28 @@
         <div class="card-body">
           <div id="settings-grid" class="settings-grid"></div>
           <button id="copy-settings" class="btn-primary">Copy as Text</button>
+          <button id="download-preset" class="btn-primary" style="margin-left:0.5rem;">Download Preset (.json)</button>
+          <p class="mockup-disclaimer" style="margin:0.75rem 0 0;">
+            Best-effort preset file built from a real HandBrake v72 export — please verify it imports
+            correctly in your version (File &rarr; Presets &rarr; Import).
+          </p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><p class="eyebrow">Adjust Output</p></div>
+        <div class="card-body">
+          <label class="field-label">What's this file for?</label>
+          <div class="toggle-row" id="purpose-toggle" role="group" aria-label="File purpose"></div>
+          <p class="stat-note" style="margin:0.4rem 0 1.1rem;">Editing uses Constant Quality (CRF) for predictable visual quality; publishing uses Average Bitrate (ABR) for predictable file size.</p>
+
+          <label class="field-label">Video encoder / hardware</label>
+          <div class="toggle-row" id="hardware-toggle" role="group" aria-label="Video encoder hardware"></div>
+          <p class="stat-note" style="margin:0.4rem 0 1.1rem;">Hardware encoders (VideoToolbox/NVENC/QSV) use their own preset/quality scale — the speed preset shown below is an x264 approximation, not exact for hardware encoders.</p>
+
+          <label class="field-label">Audio handling</label>
+          <div class="toggle-row" id="audio-toggle" role="group" aria-label="Audio handling"></div>
+          <p class="stat-note" style="margin:0.4rem 0 0;">Passthrough keeps the source's original audio codec/channels untouched — size becomes unpredictable, excluded from the estimator below.</p>
         </div>
       </div>
 
@@ -692,13 +753,13 @@
           <input id="duration-input" type="number" min="0" step="0.5" placeholder="e.g. 45" value="30" class="input-full" style="margin-bottom:1.1rem;" />
 
           <div class="calc-grid">
-            <div class="stat-box">
+            <div class="stat-box" id="filesize-stat-box">
               <p class="stat-label">Estimated File Size</p>
               <p id="filesize-output" class="stat-value">—</p>
               <p class="stat-note">(video + audio bitrate) ÷ 8 × duration</p>
             </div>
-            <div class="stat-box">
-              <p class="stat-label">Estimated Processing Time</p>
+            <div class="stat-box" id="time-stat-box">
+              <p class="stat-label">Software Encoding ETA (x264)</p>
               <p id="time-output" class="stat-value">—</p>
               <p class="stat-note">rough ETA on a modern CPU, software encode</p>
             </div>
@@ -745,23 +806,69 @@
   const FPS_OPTIONS = [23.976, 24, 25, 29.97, 30, 50, 59.94, 60];
   const FPS_SAME = 'Same as Source';
 
-  // High / Mid / Low — unambiguous quality-vs-size scale
+  // High / Mid / Low — unambiguous quality-vs-size scale.
+  // `crf` is flat per tier (not per-bucket) since CRF/RF targets a perceptual
+  // quality level that's roughly resolution-independent, unlike bitrate.
   const TIERS = [
     {
       key: 'high', badge: 'High', label: 'High Quality', desc: 'Larger files, slowest encode', bars: 3,
-      video: { '4k': 40000, '1080p': 14000, '720p': 8000, '480p': 4000 }, audio: 192, presetSpeed: 'Slower',
+      video: { '4k': 40000, '1080p': 14000, '720p': 8000, '480p': 4000 }, crf: 18, audio: 192, presetSpeed: 'Slower',
     },
     {
       key: 'mid', badge: 'Mid', label: 'Balanced', desc: 'Moderate size, medium speed', bars: 2,
-      video: { '4k': 20000, '1080p': 8000, '720p': 5000, '480p': 2500 }, audio: 160, presetSpeed: 'Medium',
+      video: { '4k': 20000, '1080p': 8000, '720p': 5000, '480p': 2500 }, crf: 21, audio: 160, presetSpeed: 'Medium',
     },
     {
       key: 'low', badge: 'Low', label: 'Small', desc: 'Smallest files, fastest encode', bars: 1,
-      video: { '4k': 12000, '1080p': 5000, '720p': 3000, '480p': 1500 }, audio: 128, presetSpeed: 'Fast',
+      video: { '4k': 12000, '1080p': 5000, '720p': 3000, '480p': 1500 }, crf: 24, audio: 128, presetSpeed: 'Fast',
     },
   ];
 
   const PROCESSING_MULTIPLIER = { '4k': 3, '1080p': 1.5, '720p': 1, '480p': 0.7 };
+
+  // HandBrake's real internal encoder short names. Verify against a live
+  // HandBrake install if possible — these ids have shifted across versions.
+  const HW_ENCODERS = {
+    x264:         { id: 'x264',       label: 'H.264 (x264) — Software' },
+    videotoolbox: { id: 'vt_h264',    label: 'H.264 (VideoToolbox) — macOS Hardware' },
+    nvenc:        { id: 'nvenc_h264', label: 'H.264 (NVENC) — Nvidia Hardware' },
+    qsv:          { id: 'qsv_h264',   label: 'H.264 (QSV) — Intel Hardware' },
+  };
+
+  // Verbatim copy of every field from a real HandBrake v72 export that this
+  // wizard doesn't independently know about (picture filters, subtitle/
+  // chapter defaults, etc.) — used as the base for the JSON preset download.
+  const HB_PRESET_TEMPLATE = {
+    "AlignAVStart": false, "AudioAutomaticNamingBehavior": "unnamed",
+    "AudioCopyMask": ["copy:aac"], "AudioEncoderFallback": "ca_aac", "AudioLanguageList": [],
+    "AudioSecondaryEncoderMode": true, "AudioTrackNamePassthru": true, "AudioTrackSelectionBehavior": "first",
+    "ChapterMarkers": true, "ChildrenArray": [], "Default": false, "FileFormat": "av_mp4",
+    "Folder": false, "FolderOpen": false, "InlineParameterSets": false, "MetadataPassthru": true,
+    "Mp4iPodCompatible": false, "Optimize": false, "PictureAllowUpscaling": false, "PictureAutoCrop": true,
+    "PictureBottomCrop": 0, "PictureChromaSmoothCustom": "", "PictureChromaSmoothPreset": "off",
+    "PictureChromaSmoothTune": "none", "PictureColorspaceCustom": "", "PictureColorspacePreset": "off",
+    "PictureCombDetectCustom": "", "PictureCombDetectPreset": "off", "PictureCropMode": 0,
+    "PictureDeblockCustom": "strength=strong:thresh=20:blocksize=8", "PictureDeblockPreset": "off",
+    "PictureDeblockTune": "medium", "PictureDeinterlaceCustom": "", "PictureDeinterlaceFilter": "off",
+    "PictureDeinterlacePreset": "default", "PictureDenoiseCustom": "", "PictureDenoiseFilter": "off",
+    "PictureDenoisePreset": "light", "PictureDenoiseTune": "none", "PictureDetelecine": "off",
+    "PictureDetelecineCustom": "", "PictureForceHeight": 0, "PictureForceWidth": 0,
+    "PictureItuPAR": false, "PictureKeepRatio": true, "PictureLeftCrop": 0, "PictureModulus": 2,
+    "PicturePadBottom": 0, "PicturePadColor": "black", "PicturePadLeft": 0, "PicturePadMode": "none",
+    "PicturePadRight": 0, "PicturePadTop": 0, "PicturePAR": "auto", "PicturePARHeight": 1,
+    "PicturePARWidth": 1, "PictureRightCrop": 0, "PictureRotate": "angle=0:hflip=0",
+    "PictureSharpenCustom": "", "PictureSharpenFilter": "off", "PictureSharpenPreset": "medium",
+    "PictureSharpenTune": "none", "PictureTopCrop": 0, "PictureUseMaximumSize": true,
+    "PresetDescription": "", "PresetDisabled": false,
+    "SubtitleAddCC": false, "SubtitleAddForeignAudioSearch": true, "SubtitleAddForeignAudioSubtitle": false,
+    "SubtitleBurnBDSub": true, "SubtitleBurnBehavior": "foreign", "SubtitleBurnDVDSub": true,
+    "SubtitleLanguageList": [], "SubtitleTrackNamePassthru": true, "SubtitleTrackSelectionBehavior": "none",
+    "Type": 1, "UsesPictureFilters": true,
+    "VideoColorMatrixCodeOverride": 0, "VideoColorRange": "limited", "VideoGrayScale": false,
+    "VideoHWDecode": 0, "VideoLevel": "4.0", "VideoOptionExtra": "",
+    "VideoPasshtruHDRDynamicMetadata": "all", "VideoProfile": "main", "VideoScaler": "swscale",
+    "VideoTune": "", "VideoTurboMultiPass": false, "x264Option": "", "x264UseAdvancedOptions": false,
+  };
 
   // ---------- State ----------
   const state = {
@@ -773,6 +880,15 @@
     goal: null,
     targetResKey: null,
     tierKey: null,
+  };
+
+  // Toggles live on the results screen, not the wizard — they never gate
+  // step navigation, so they're kept separate from `state` rather than
+  // polluting it (and from goToStep/renderAnswerTrail/Start Over logic).
+  const toggles = {
+    purpose: 'publish',   // 'publish' (ABR, default) | 'edit' (CRF)
+    hardware: 'x264',     // 'x264' (default) | 'videotoolbox' | 'nvenc' | 'qsv'
+    audio: 'stereo',      // 'stereo' (default) | 'passthrough'
   };
 
   const TOTAL_STEPS = 4;
@@ -788,13 +904,18 @@
   function finalResolution() {
     if (state.goal === 'downscale' && state.targetResKey) {
       const r = RES_PRESETS.find(r => r.key === state.targetResKey);
-      return { w: r.w, h: r.h, bucket: r.key };
+      if (r) return { w: r.w, h: r.h, bucket: r.key };
     }
-    if (state.sourceResKey === 'custom') {
+    if (state.sourceResKey === 'custom' && state.sourceW && state.sourceH) {
       return { w: state.sourceW, h: state.sourceH, bucket: nearestBucket(state.sourceH) };
     }
     const r = RES_PRESETS.find(r => r.key === state.sourceResKey);
-    return { w: r.w, h: r.h, bucket: r.key };
+    if (r) return { w: r.w, h: r.h, bucket: r.key };
+    // Defensive fallback — should be unreachable via the UI today (Step 4
+    // always forces a target pick when source is unknown), but avoid a hard
+    // crash if state ever ends up here some other way.
+    console.warn('finalResolution(): no resolvable resolution from state', state);
+    return { w: 1920, h: 1080, bucket: '1080p' };
   }
 
   function fmtBitrate(kbps) { return kbps.toLocaleString() + ' kbps'; }
@@ -806,7 +927,21 @@
     return mb.toFixed(1) + ' MB';
   }
 
-  function appMockupHTML({ fps, videoKbps, audioKbps, presetSpeed }) {
+  function appMockupHTML(s) {
+    const encoderLabel = s.encoderLabel || 'H.264 (x264) — Software';
+    const qualityRow = s.isCRF
+      ? `● Constant Quality: <strong>RF ${s.crf}</strong>`
+      : `● Avg Bitrate (kbps): <strong>${s.videoKbps.toLocaleString()}</strong>`;
+    const twoPassRow = s.isCRF
+      ? ''
+      : `<div class="mockup-row"><span class="mockup-label"></span><span class="mockup-control">☑ 2-Pass Encoding</span></div>`;
+    const audioRows = s.isPassthrough
+      ? `<div class="mockup-row"><span class="mockup-label">Codec</span><span class="mockup-control">Auto Passthrough</span></div>
+         <div class="mockup-row"><span class="mockup-label">Mixdown</span><span class="mockup-control">N/A (passthrough)</span></div>`
+      : `<div class="mockup-row"><span class="mockup-label">Codec</span><span class="mockup-control">AAC (avcodec) ▾</span></div>
+         <div class="mockup-row"><span class="mockup-label">Mixdown</span><span class="mockup-control">Stereo ▾</span></div>
+         <div class="mockup-row"><span class="mockup-label">Bitrate (kbps)</span><span class="mockup-control"><strong>${s.audioKbps}</strong> ▾</span></div>`;
+
     return `
       <div class="app-mockup">
         <div class="app-mockup-bar"><span>HandBrake — Video Tab</span><span class="badge-rep">Representation</span></div>
@@ -815,11 +950,11 @@
           <span class="app-tab active">Video</span><span class="app-tab">Audio</span><span class="app-tab">Subtitles</span>
         </div>
         <div class="app-mockup-body">
-          <div class="mockup-row"><span class="mockup-label">Video Encoder</span><span class="mockup-control">H.264 (x264) ▾</span></div>
-          <div class="mockup-row"><span class="mockup-label">Framerate (FPS)</span><span class="mockup-control"><strong>${fps}</strong> ▾ &nbsp; ● Constant Framerate</span></div>
-          <div class="mockup-row"><span class="mockup-label">Quality</span><span class="mockup-control">● Avg Bitrate (kbps): <strong>${videoKbps.toLocaleString()}</strong></span></div>
-          <div class="mockup-row"><span class="mockup-label"></span><span class="mockup-control">☑ 2-Pass Encoding</span></div>
-          <div class="mockup-row"><span class="mockup-label">Encoder Preset</span><span class="mockup-control"><strong>${presetSpeed}</strong></span></div>
+          <div class="mockup-row"><span class="mockup-label">Video Encoder</span><span class="mockup-control">${encoderLabel} ▾</span></div>
+          <div class="mockup-row"><span class="mockup-label">Framerate (FPS)</span><span class="mockup-control"><strong>${fpsDisplay(s.fps)}</strong> ▾ &nbsp; ● Constant Framerate</span></div>
+          <div class="mockup-row"><span class="mockup-label">Quality</span><span class="mockup-control">${qualityRow}</span></div>
+          ${twoPassRow}
+          <div class="mockup-row"><span class="mockup-label">Encoder Preset</span><span class="mockup-control"><strong>${s.presetSpeed}</strong></span></div>
         </div>
       </div>
       <div class="app-mockup">
@@ -828,11 +963,7 @@
           <span class="app-tab">Dimensions</span><span class="app-tab">Filters</span>
           <span class="app-tab">Video</span><span class="app-tab active">Audio</span><span class="app-tab">Subtitles</span>
         </div>
-        <div class="app-mockup-body">
-          <div class="mockup-row"><span class="mockup-label">Codec</span><span class="mockup-control">AAC (avcodec) ▾</span></div>
-          <div class="mockup-row"><span class="mockup-label">Mixdown</span><span class="mockup-control">Stereo ▾</span></div>
-          <div class="mockup-row"><span class="mockup-label">Bitrate (kbps)</span><span class="mockup-control"><strong>${audioKbps}</strong> ▾</span></div>
-        </div>
+        <div class="app-mockup-body">${audioRows}</div>
       </div>
     `;
   }
@@ -904,13 +1035,25 @@
     goToStep(3);
   });
 
+  function isPositiveInteger(raw) {
+    const n = Number(raw);
+    return Number.isFinite(n) && n > 0 && Number.isInteger(n);
+  }
+
   function confirmCustomRes() {
-    const w = parseInt(document.getElementById('custom-w').value, 10);
-    const h = parseInt(document.getElementById('custom-h').value, 10);
-    if (!w || !h) return;
+    const wRaw = document.getElementById('custom-w').value;
+    const hRaw = document.getElementById('custom-h').value;
+    const errorEl = document.getElementById('custom-res-error');
+    if (!isPositiveInteger(wRaw) || !isPositiveInteger(hRaw)) {
+      errorEl.classList.remove('hidden');
+      return;
+    }
+    errorEl.classList.add('hidden');
+    // w/h are guaranteed positive integers past this point — safe to
+    // interpolate as numbers anywhere downstream.
     state.sourceResKey = 'custom';
-    state.sourceW = w;
-    state.sourceH = h;
+    state.sourceW = Number.parseInt(wRaw, 10);
+    state.sourceH = Number.parseInt(hRaw, 10);
     goToStep(3);
   }
   document.getElementById('custom-res-confirm').addEventListener('click', confirmCustomRes);
@@ -1073,68 +1216,135 @@
     if (hasProgress && !window.confirm('Start over? Your current answers will be cleared.')) return;
     state.sourceResKey = null; state.sourceW = null; state.sourceH = null;
     state.fps = null; state.goal = null; state.targetResKey = null; state.tierKey = null;
+    toggles.purpose = 'publish'; toggles.hardware = 'x264'; toggles.audio = 'stereo';
     document.getElementById('custom-res-inputs').classList.add('hidden');
     document.getElementById('downscale-target-wrap').classList.add('hidden');
+    document.getElementById('custom-res-error').classList.add('hidden');
     goToStep(1);
   });
 
   // ---------- Results ----------
   let currentSettings = null;
 
-  function showResults() {
+  function computeSettings() {
     const tier = TIERS.find(t => t.key === state.tierKey);
     const res = finalResolution();
-    const videoKbps = tier.video[res.bucket];
-    const audioKbps = tier.audio;
+    const isCRF = toggles.purpose === 'edit';
+    const isPassthrough = toggles.audio === 'passthrough';
+    const hw = HW_ENCODERS[toggles.hardware];
 
-    currentSettings = {
-      resolution: `${res.w}×${res.h}`,
-      fps: state.fps,
-      videoKbps, audioKbps,
+    return {
+      resolution: { w: res.w, h: res.h, label: `${res.w}×${res.h}` },
       bucket: res.bucket,
-      presetSpeed: tier.presetSpeed,
+      fps: state.fps,
+      tier,
       tierLabel: `${tier.label} (${tier.badge})`,
+      presetSpeed: tier.presetSpeed,
+      videoKbps: tier.video[res.bucket],
+      crf: tier.crf,
+      audioKbps: tier.audio,
+      isCRF,
+      isPassthrough,
+      encoderId: hw.id,
+      encoderLabel: hw.label,
+      hardwareKey: toggles.hardware,
     };
+  }
 
-    const grid = document.getElementById('settings-grid');
+  function renderSettingsGrid(s) {
+    const rateControlRow = s.isCRF
+      ? 'Constant Quality (CRF/CQ)'
+      : 'Average Bitrate (ABR), 2-pass recommended';
+    const videoBitrateRow = s.isCRF
+      ? `RF ${s.crf} (lower = higher quality)`
+      : fmtBitrate(s.videoKbps);
+    const audioRow = s.isPassthrough
+      ? 'Auto Passthrough — original channels/codec, size varies'
+      : `AAC, ${s.audioKbps} kbps, Stereo`;
+
     const rows = [
-      ['Resolution', currentSettings.resolution],
-      ['Framerate', `${fpsDisplay(state.fps)} — Constant Framerate (CFR)`],
-      ['Video Codec', 'H.264 (x264)'],
-      ['Rate Control', 'Average Bitrate (ABR), 2-pass recommended'],
-      ['Video Bitrate', fmtBitrate(videoKbps)],
-      ['Audio', `AAC, ${audioKbps} kbps, Stereo`],
-      ['Encoder Speed Preset', tier.presetSpeed],
-      ['Quality Tier', currentSettings.tierLabel],
+      ['Resolution', s.resolution.label],
+      ['Framerate', `${fpsDisplay(s.fps)} — Constant Framerate (CFR)`],
+      ['Video Encoder', s.encoderLabel],
+      ['Rate Control', rateControlRow],
+      [s.isCRF ? 'Quality (RF/CRF)' : 'Video Bitrate', videoBitrateRow],
+      ['Audio', audioRow],
+      ['Encoder Speed Preset', s.presetSpeed],
+      ['Quality Tier', s.tierLabel],
     ];
-    grid.innerHTML = rows.map(([k, v]) => `
+    document.getElementById('settings-grid').innerHTML = rows.map(([k, v]) => `
       <div class="setting-row">
         <p class="setting-label">${k}</p>
         <p class="setting-value">${v}</p>
       </div>
     `).join('');
+  }
 
-    document.getElementById('mockup-output').innerHTML = appMockupHTML({
-      fps: state.fps, videoKbps, audioKbps, presetSpeed: tier.presetSpeed,
+  function renderToggles() {
+    const purposeWrap = document.getElementById('purpose-toggle');
+    purposeWrap.innerHTML = '';
+    [
+      ['publish', 'Publishing / Sharing', 'ABR — predictable file size'],
+      ['edit', 'Editing in an NLE', 'CRF — predictable visual quality'],
+    ].forEach(([key, title, sub]) => {
+      purposeWrap.appendChild(optionButton(
+        `<div class="opt-title">${title}</div><div class="opt-sub" style="text-transform:none;letter-spacing:0;font-family:var(--sans);font-size:0.78rem;color:var(--mid-grey);">${sub}</div>`,
+        toggles.purpose === key,
+        () => { toggles.purpose = key; renderResults(); }
+      ));
     });
 
+    const hwWrap = document.getElementById('hardware-toggle');
+    hwWrap.innerHTML = '';
+    Object.entries(HW_ENCODERS).forEach(([key, info]) => {
+      hwWrap.appendChild(optionButton(
+        `<div class="opt-title" style="font-size:0.85rem;">${info.label}</div>`,
+        toggles.hardware === key,
+        () => { toggles.hardware = key; renderResults(); }
+      ));
+    });
+
+    const audioWrap = document.getElementById('audio-toggle');
+    audioWrap.innerHTML = '';
+    [
+      ['stereo', 'Stereo Downmix', 'AAC, fixed bitrate'],
+      ['passthrough', 'Passthrough', 'Keep original channels/codec'],
+    ].forEach(([key, title, sub]) => {
+      audioWrap.appendChild(optionButton(
+        `<div class="opt-title">${title}</div><div class="opt-sub" style="text-transform:none;letter-spacing:0;font-family:var(--sans);font-size:0.78rem;color:var(--mid-grey);">${sub}</div>`,
+        toggles.audio === key,
+        () => { toggles.audio = key; renderResults(); }
+      ));
+    });
+  }
+
+  function renderResults() {
+    currentSettings = computeSettings();
+    renderSettingsGrid(currentSettings);
+    document.getElementById('mockup-output').innerHTML = appMockupHTML(currentSettings);
+    renderToggles();
     document.getElementById('results').classList.remove('hidden');
     renderAnswerTrail();
-    runCalculator();
+    renderCalculator(currentSettings);
+  }
+
+  function showResults() {
+    renderResults();
     document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   document.getElementById('copy-settings').addEventListener('click', () => {
     if (!currentSettings) return;
+    const s = currentSettings;
     const text = [
-      `HandBrake Settings (${currentSettings.tierLabel})`,
-      `Resolution: ${currentSettings.resolution}`,
-      `Framerate: ${fpsDisplay(currentSettings.fps)} (Constant Framerate / CFR)`,
-      `Video Codec: H.264 (x264)`,
-      `Rate Control: Average Bitrate (ABR), 2-pass recommended`,
-      `Video Bitrate: ${currentSettings.videoKbps} kbps`,
-      `Audio: AAC, ${currentSettings.audioKbps} kbps, Stereo`,
-      `Encoder Speed Preset: ${currentSettings.presetSpeed}`,
+      `HandBrake Settings (${s.tierLabel})`,
+      `Resolution: ${s.resolution.label}`,
+      `Framerate: ${fpsDisplay(s.fps)} (Constant Framerate / CFR)`,
+      `Video Encoder: ${s.encoderLabel}`,
+      `Rate Control: ${s.isCRF ? 'Constant Quality (CRF/CQ)' : 'Average Bitrate (ABR), 2-pass recommended'}`,
+      s.isCRF ? `Quality: RF ${s.crf}` : `Video Bitrate: ${s.videoKbps} kbps`,
+      `Audio: ${s.isPassthrough ? 'Auto Passthrough (original channels/codec)' : `AAC, ${s.audioKbps} kbps, Stereo`}`,
+      `Encoder Speed Preset: ${s.presetSpeed}`,
     ].join('\n');
     navigator.clipboard.writeText(text).then(() => {
       const btn = document.getElementById('copy-settings');
@@ -1145,29 +1355,117 @@
     });
   });
 
-  // ---------- Calculator ----------
-  function runCalculator() {
-    if (!currentSettings) return;
-    const minutes = parseFloat(document.getElementById('duration-input').value) || 0;
-    const seconds = minutes * 60;
-    const totalKbps = currentSettings.videoKbps + currentSettings.audioKbps;
-    const totalKB = (totalKbps / 8) * seconds;
-    const totalMB = totalKB / 1024;
-    document.getElementById('filesize-output').textContent = minutes > 0 ? fmtBytes(totalMB) : '—';
-
-    const multiplier = PROCESSING_MULTIPLIER[currentSettings.bucket];
-    const estMinutes = minutes * multiplier;
-    let timeStr = '—';
-    if (minutes > 0) {
-      if (estMinutes < 1) timeStr = Math.round(estMinutes * 60) + ' sec';
-      else if (estMinutes < 60) timeStr = estMinutes.toFixed(1) + ' min';
-      else timeStr = (estMinutes / 60).toFixed(1) + ' hr';
-      timeStr += ` (~${multiplier}x real-time)`;
-    }
-    document.getElementById('time-output').textContent = timeStr;
+  // ---------- JSON preset export ----------
+  function presetSpeedToHandbrakeId(speed) {
+    return { Slower: 'slower', Medium: 'medium', Fast: 'fast' }[speed] || 'medium';
   }
 
-  document.getElementById('duration-input').addEventListener('input', runCalculator);
+  function buildPresetJSON(s) {
+    const fpsValue = (s.fps === FPS_SAME || s.fps === null) ? 'auto' : s.fps;
+    const resSlug = `${s.resolution.w}x${s.resolution.h}`;
+    const presetName = `${s.tier.badge}-${resSlug}-${s.isCRF ? 'CRF' : 'ABR'}`;
+
+    const audioBlock = s.isPassthrough
+      ? {
+          AudioBitrate: 160, AudioCompressionLevel: -1, AudioDitherMethod: 'auto',
+          AudioEncoder: 'copy:aac', AudioMixdown: 'none', AudioNormalizeMixLevel: false,
+          AudioSamplerate: 'auto', AudioTrackDRCSlider: 0, AudioTrackGainSlider: 0,
+          AudioTrackQuality: -1, AudioTrackQualityEnable: false,
+        }
+      : {
+          AudioBitrate: s.audioKbps, AudioCompressionLevel: -1, AudioDitherMethod: 'auto',
+          AudioEncoder: 'ca_aac', AudioMixdown: 'stereo', AudioNormalizeMixLevel: false,
+          AudioSamplerate: 'auto', AudioTrackDRCSlider: 0, AudioTrackGainSlider: 0,
+          AudioTrackQuality: -1, AudioTrackQualityEnable: false,
+        };
+
+    return {
+      PresetList: [{
+        ...HB_PRESET_TEMPLATE,
+        PresetName: presetName,
+        PictureWidth: s.resolution.w,
+        PictureHeight: s.resolution.h,
+        PictureDARWidth: s.resolution.w,
+        VideoEncoder: s.encoderId,
+        VideoFramerateMode: 'cfr',
+        VideoFramerate: fpsValue,
+        VideoQualityType: s.isCRF ? 1 : 2,
+        VideoQualitySlider: s.isCRF ? s.crf : 22,
+        VideoAvgBitrate: s.isCRF ? 4000 : s.videoKbps,
+        VideoMultiPass: !s.isCRF,
+        VideoPreset: presetSpeedToHandbrakeId(s.presetSpeed),
+        AudioList: [audioBlock],
+      }],
+      VersionMajor: 72, VersionMinor: 0, VersionMicro: 0,
+    };
+  }
+
+  function downloadPreset() {
+    if (!currentSettings) return;
+    const json = buildPresetJSON(currentSettings);
+    const blob = new Blob([JSON.stringify(json, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const resSlug = `${currentSettings.resolution.w}x${currentSettings.resolution.h}`;
+    a.href = url;
+    a.download = `handbrake-preset-${currentSettings.tier.key}-${resSlug}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  document.getElementById('download-preset').addEventListener('click', downloadPreset);
+
+  // ---------- Calculator ----------
+  function renderCalculator(s) {
+    if (!s) return;
+    const minutes = parseFloat(document.getElementById('duration-input').value) || 0;
+
+    const sizeBox = document.getElementById('filesize-stat-box');
+    if (s.isCRF) {
+      sizeBox.innerHTML = `
+        <p class="stat-label">Estimated File Size</p>
+        <p class="stat-value" style="font-size:1.1rem;">Not predictable under CRF</p>
+        <p class="stat-note">Constant Quality targets a perceptual quality level, not a bitrate — output size depends on source content complexity and can't be estimated in advance.</p>
+      `;
+    } else {
+      const seconds = minutes * 60;
+      const effectiveKbps = s.isPassthrough ? s.videoKbps : (s.videoKbps + s.audioKbps);
+      const totalMB = ((effectiveKbps / 8) * seconds) / 1024;
+      sizeBox.innerHTML = `
+        <p class="stat-label">Estimated File Size</p>
+        <p id="filesize-output" class="stat-value">${minutes > 0 ? fmtBytes(totalMB) : '—'}</p>
+        <p class="stat-note">${s.isPassthrough ? 'Video bitrate only — passthrough audio size is variable and excluded.' : '(video + audio bitrate) ÷ 8 × duration'}</p>
+      `;
+    }
+
+    const timeBox = document.getElementById('time-stat-box');
+    if (s.hardwareKey === 'x264') {
+      const multiplier = PROCESSING_MULTIPLIER[s.bucket];
+      const estMinutes = minutes * multiplier;
+      let timeStr = '—';
+      if (minutes > 0) {
+        if (estMinutes < 1) timeStr = Math.round(estMinutes * 60) + ' sec';
+        else if (estMinutes < 60) timeStr = estMinutes.toFixed(1) + ' min';
+        else timeStr = (estMinutes / 60).toFixed(1) + ' hr';
+        timeStr += ` (~${multiplier}x real-time)`;
+      }
+      timeBox.innerHTML = `
+        <p class="stat-label">Software Encoding ETA (x264)</p>
+        <p id="time-output" class="stat-value">${timeStr}</p>
+        <p class="stat-note">rough ETA on a modern CPU, software encode</p>
+      `;
+    } else {
+      timeBox.innerHTML = `
+        <p class="stat-label">Software Encoding ETA (x264)</p>
+        <p class="stat-value" style="font-size:1.1rem;">N/A — hardware encoding selected</p>
+        <p class="stat-note">${HW_ENCODERS[s.hardwareKey].label} will be substantially faster than the x264 software estimate would suggest — we don't have reliable per-hardware multiplier data to show a number here.</p>
+      `;
+    }
+  }
+
+  document.getElementById('duration-input').addEventListener('input', () => renderCalculator(currentSettings));
 
   // ---------- Reference Presets ----------
   function renderPresets() {
@@ -1176,19 +1474,19 @@
         badge: 'High', title: 'High Quality',
         sub: 'Source resolution kept — larger files, slowest encode',
         lines: ['Resolution: Source (e.g. 1920×1080 or 3840×2160)', 'Video Bitrate: 14,000 kbps (1080p) / 40,000 kbps (4K)', 'Codec: H.264, ABR, 2-pass', 'Framerate: Source fps, CFR', 'Audio: AAC 192 kbps'],
-        mockup: { fps: 'Source', videoKbps: 14000, audioKbps: 192, presetSpeed: 'Slower' },
+        mockup: { fps: 'Source', videoKbps: 14000, audioKbps: 192, presetSpeed: 'Slower', isCRF: false, isPassthrough: false, crf: 18, encoderLabel: 'H.264 (x264) — Software' },
       },
       {
         badge: 'Mid', title: 'Balanced',
         sub: '4K source downscaled to 1080p — everyday editing footage',
         lines: ['Resolution: 1920×1080', 'Video Bitrate: 8,000 kbps', 'Codec: H.264, ABR, 2-pass', 'Framerate: Source fps, CFR', 'Audio: AAC 160 kbps'],
-        mockup: { fps: 'Source', videoKbps: 8000, audioKbps: 160, presetSpeed: 'Medium' },
+        mockup: { fps: 'Source', videoKbps: 8000, audioKbps: 160, presetSpeed: 'Medium', isCRF: false, isPassthrough: false, crf: 21, encoderLabel: 'H.264 (x264) — Software' },
       },
       {
         badge: 'Low', title: 'Small',
         sub: '4K source downscaled to 720p — extreme space-saving only',
         lines: ['Resolution: 1280×720', 'Video Bitrate: 3,000 kbps', 'Codec: H.264, ABR, 2-pass', 'Framerate: Source fps, CFR', 'Audio: AAC 128 kbps'],
-        mockup: { fps: 'Source', videoKbps: 3000, audioKbps: 128, presetSpeed: 'Fast' },
+        mockup: { fps: 'Source', videoKbps: 3000, audioKbps: 128, presetSpeed: 'Fast', isCRF: false, isPassthrough: false, crf: 24, encoderLabel: 'H.264 (x264) — Software' },
       },
     ];
     const wrap = document.getElementById('preset-cards');
