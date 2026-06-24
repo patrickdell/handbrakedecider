@@ -442,9 +442,6 @@
   .stat-value { font-family: var(--serif); font-weight: 700; font-size: 1.6rem; margin: 0; color: var(--black); }
   .stat-note { font-size: 0.78rem; color: var(--light-grey); margin: 0.35rem 0 0; }
 
-  /* Results-screen toggles (Purpose / Hardware / Audio) */
-  .toggle-row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.2rem; }
-
   /* Preset reference cards */
   .preset-grid {
     display: grid;
@@ -707,23 +704,6 @@
       </div>
 
       <div class="card">
-        <div class="card-header"><p class="eyebrow">Adjust Output</p></div>
-        <div class="card-body">
-          <label class="field-label">What's this file for?</label>
-          <div class="toggle-row" id="purpose-toggle" role="group" aria-label="File purpose"></div>
-          <p class="stat-note" style="margin:0.4rem 0 1.1rem;">Editing uses Constant Quality (CRF) for predictable visual quality; publishing uses Average Bitrate (ABR) for predictable file size.</p>
-
-          <label class="field-label">Video encoder / hardware</label>
-          <div class="toggle-row" id="hardware-toggle" role="group" aria-label="Video encoder hardware"></div>
-          <p class="stat-note" style="margin:0.4rem 0 1.1rem;">Hardware encoders (VideoToolbox/NVENC/QSV) use their own preset/quality scale — the speed preset shown below is an x264 approximation, not exact for hardware encoders.</p>
-
-          <label class="field-label">Audio handling</label>
-          <div class="toggle-row" id="audio-toggle" role="group" aria-label="Audio handling"></div>
-          <p class="stat-note" style="margin:0.4rem 0 0;">Passthrough keeps the source's original audio codec/channels untouched — size becomes unpredictable, excluded from the estimator below.</p>
-        </div>
-      </div>
-
-      <div class="card">
         <div class="card-header"><p class="eyebrow">Where to Enter These Settings</p></div>
         <div class="card-body">
           <p class="mockup-disclaimer">
@@ -806,34 +786,32 @@
   const FPS_OPTIONS = [23.976, 24, 25, 29.97, 30, 50, 59.94, 60];
   const FPS_SAME = 'Same as Source';
 
-  // High / Mid / Low — unambiguous quality-vs-size scale.
-  // `crf` is flat per tier (not per-bucket) since CRF/RF targets a perceptual
-  // quality level that's roughly resolution-independent, unlike bitrate.
+  // High / Mid / Low — unambiguous quality-vs-size scale. Audio is always
+  // Auto Passthrough now (no fixed kbps to track), so only video bitrate
+  // and encode speed vary by tier.
   const TIERS = [
     {
       key: 'high', badge: 'High', label: 'High Quality', desc: 'Larger files, slowest encode', bars: 3,
-      video: { '4k': 40000, '1080p': 14000, '720p': 8000, '480p': 4000 }, crf: 18, audio: 192, presetSpeed: 'Slower',
+      video: { '4k': 40000, '1080p': 14000, '720p': 8000, '480p': 4000 }, presetSpeed: 'Slower',
     },
     {
       key: 'mid', badge: 'Mid', label: 'Balanced', desc: 'Moderate size, medium speed', bars: 2,
-      video: { '4k': 20000, '1080p': 8000, '720p': 5000, '480p': 2500 }, crf: 21, audio: 160, presetSpeed: 'Medium',
+      video: { '4k': 20000, '1080p': 8000, '720p': 5000, '480p': 2500 }, presetSpeed: 'Medium',
     },
     {
       key: 'low', badge: 'Low', label: 'Small', desc: 'Smallest files, fastest encode', bars: 1,
-      video: { '4k': 12000, '1080p': 5000, '720p': 3000, '480p': 1500 }, crf: 24, audio: 128, presetSpeed: 'Fast',
+      video: { '4k': 12000, '1080p': 5000, '720p': 3000, '480p': 1500 }, presetSpeed: 'Fast',
     },
   ];
 
   const PROCESSING_MULTIPLIER = { '4k': 3, '1080p': 1.5, '720p': 1, '480p': 0.7 };
 
-  // HandBrake's real internal encoder short names. Verify against a live
-  // HandBrake install if possible — these ids have shifted across versions.
-  const HW_ENCODERS = {
-    x264:         { id: 'x264',       label: 'H.264 (x264) — Software' },
-    videotoolbox: { id: 'vt_h264',    label: 'H.264 (VideoToolbox) — macOS Hardware' },
-    nvenc:        { id: 'nvenc_h264', label: 'H.264 (NVENC) — Nvidia Hardware' },
-    qsv:          { id: 'qsv_h264',   label: 'H.264 (QSV) — Intel Hardware' },
-  };
+  // Fixed output recipe — no user choice here on purpose. ABR is the most
+  // predictable for novices, x264 software runs identically on every
+  // machine, and Auto Passthrough preserves the original audio untouched
+  // (no re-encode round trip) going into Final Cut Pro.
+  const FIXED_ENCODER_ID = 'x264';
+  const FIXED_ENCODER_LABEL = 'H.264 (x264) — Software';
 
   // Verbatim copy of every field from a real HandBrake v72 export that this
   // wizard doesn't independently know about (picture filters, subtitle/
@@ -882,15 +860,6 @@
     tierKey: null,
   };
 
-  // Toggles live on the results screen, not the wizard — they never gate
-  // step navigation, so they're kept separate from `state` rather than
-  // polluting it (and from goToStep/renderAnswerTrail/Start Over logic).
-  const toggles = {
-    purpose: 'publish',   // 'publish' (ABR, default) | 'edit' (CRF)
-    hardware: 'x264',     // 'x264' (default) | 'videotoolbox' | 'nvenc' | 'qsv'
-    audio: 'stereo',      // 'stereo' (default) | 'passthrough'
-  };
-
   const TOTAL_STEPS = 4;
 
   // ---------- Helpers ----------
@@ -928,20 +897,6 @@
   }
 
   function appMockupHTML(s) {
-    const encoderLabel = s.encoderLabel || 'H.264 (x264) — Software';
-    const qualityRow = s.isCRF
-      ? `● Constant Quality: <strong>RF ${s.crf}</strong>`
-      : `● Avg Bitrate (kbps): <strong>${s.videoKbps.toLocaleString()}</strong>`;
-    const twoPassRow = s.isCRF
-      ? ''
-      : `<div class="mockup-row"><span class="mockup-label"></span><span class="mockup-control">☑ 2-Pass Encoding</span></div>`;
-    const audioRows = s.isPassthrough
-      ? `<div class="mockup-row"><span class="mockup-label">Codec</span><span class="mockup-control">Auto Passthrough</span></div>
-         <div class="mockup-row"><span class="mockup-label">Mixdown</span><span class="mockup-control">N/A (passthrough)</span></div>`
-      : `<div class="mockup-row"><span class="mockup-label">Codec</span><span class="mockup-control">AAC (avcodec) ▾</span></div>
-         <div class="mockup-row"><span class="mockup-label">Mixdown</span><span class="mockup-control">Stereo ▾</span></div>
-         <div class="mockup-row"><span class="mockup-label">Bitrate (kbps)</span><span class="mockup-control"><strong>${s.audioKbps}</strong> ▾</span></div>`;
-
     return `
       <div class="app-mockup">
         <div class="app-mockup-bar"><span>HandBrake — Video Tab</span><span class="badge-rep">Representation</span></div>
@@ -950,10 +905,10 @@
           <span class="app-tab active">Video</span><span class="app-tab">Audio</span><span class="app-tab">Subtitles</span>
         </div>
         <div class="app-mockup-body">
-          <div class="mockup-row"><span class="mockup-label">Video Encoder</span><span class="mockup-control">${encoderLabel} ▾</span></div>
+          <div class="mockup-row"><span class="mockup-label">Video Encoder</span><span class="mockup-control">${FIXED_ENCODER_LABEL} ▾</span></div>
           <div class="mockup-row"><span class="mockup-label">Framerate (FPS)</span><span class="mockup-control"><strong>${fpsDisplay(s.fps)}</strong> ▾ &nbsp; ● Constant Framerate</span></div>
-          <div class="mockup-row"><span class="mockup-label">Quality</span><span class="mockup-control">${qualityRow}</span></div>
-          ${twoPassRow}
+          <div class="mockup-row"><span class="mockup-label">Quality</span><span class="mockup-control">● Avg Bitrate (kbps): <strong>${s.videoKbps.toLocaleString()}</strong></span></div>
+          <div class="mockup-row"><span class="mockup-label"></span><span class="mockup-control">☑ 2-Pass Encoding</span></div>
           <div class="mockup-row"><span class="mockup-label">Encoder Preset</span><span class="mockup-control"><strong>${s.presetSpeed}</strong></span></div>
         </div>
       </div>
@@ -963,7 +918,10 @@
           <span class="app-tab">Dimensions</span><span class="app-tab">Filters</span>
           <span class="app-tab">Video</span><span class="app-tab active">Audio</span><span class="app-tab">Subtitles</span>
         </div>
-        <div class="app-mockup-body">${audioRows}</div>
+        <div class="app-mockup-body">
+          <div class="mockup-row"><span class="mockup-label">Codec</span><span class="mockup-control">Auto Passthrough</span></div>
+          <div class="mockup-row"><span class="mockup-label">Mixdown</span><span class="mockup-control">N/A (passthrough)</span></div>
+        </div>
       </div>
     `;
   }
@@ -1216,7 +1174,6 @@
     if (hasProgress && !window.confirm('Start over? Your current answers will be cleared.')) return;
     state.sourceResKey = null; state.sourceW = null; state.sourceH = null;
     state.fps = null; state.goal = null; state.targetResKey = null; state.tierKey = null;
-    toggles.purpose = 'publish'; toggles.hardware = 'x264'; toggles.audio = 'stereo';
     document.getElementById('custom-res-inputs').classList.add('hidden');
     document.getElementById('downscale-target-wrap').classList.add('hidden');
     document.getElementById('custom-res-error').classList.add('hidden');
@@ -1229,9 +1186,6 @@
   function computeSettings() {
     const tier = TIERS.find(t => t.key === state.tierKey);
     const res = finalResolution();
-    const isCRF = toggles.purpose === 'edit';
-    const isPassthrough = toggles.audio === 'passthrough';
-    const hw = HW_ENCODERS[toggles.hardware];
 
     return {
       resolution: { w: res.w, h: res.h, label: `${res.w}×${res.h}` },
@@ -1241,34 +1195,19 @@
       tierLabel: `${tier.label} (${tier.badge})`,
       presetSpeed: tier.presetSpeed,
       videoKbps: tier.video[res.bucket],
-      crf: tier.crf,
-      audioKbps: tier.audio,
-      isCRF,
-      isPassthrough,
-      encoderId: hw.id,
-      encoderLabel: hw.label,
-      hardwareKey: toggles.hardware,
+      encoderId: FIXED_ENCODER_ID,
+      encoderLabel: FIXED_ENCODER_LABEL,
     };
   }
 
   function renderSettingsGrid(s) {
-    const rateControlRow = s.isCRF
-      ? 'Constant Quality (CRF/CQ)'
-      : 'Average Bitrate (ABR), 2-pass recommended';
-    const videoBitrateRow = s.isCRF
-      ? `RF ${s.crf} (lower = higher quality)`
-      : fmtBitrate(s.videoKbps);
-    const audioRow = s.isPassthrough
-      ? 'Auto Passthrough — original channels/codec, size varies'
-      : `AAC, ${s.audioKbps} kbps, Stereo`;
-
     const rows = [
       ['Resolution', s.resolution.label],
       ['Framerate', `${fpsDisplay(s.fps)} — Constant Framerate (CFR)`],
       ['Video Encoder', s.encoderLabel],
-      ['Rate Control', rateControlRow],
-      [s.isCRF ? 'Quality (RF/CRF)' : 'Video Bitrate', videoBitrateRow],
-      ['Audio', audioRow],
+      ['Rate Control', 'Average Bitrate (ABR), 2-pass recommended'],
+      ['Video Bitrate', fmtBitrate(s.videoKbps)],
+      ['Audio', 'Auto Passthrough — original channels/codec, size varies'],
       ['Encoder Speed Preset', s.presetSpeed],
       ['Quality Tier', s.tierLabel],
     ];
@@ -1280,49 +1219,10 @@
     `).join('');
   }
 
-  function renderToggles() {
-    const purposeWrap = document.getElementById('purpose-toggle');
-    purposeWrap.innerHTML = '';
-    [
-      ['publish', 'Publishing / Sharing', 'ABR — predictable file size'],
-      ['edit', 'Editing in an NLE', 'CRF — predictable visual quality'],
-    ].forEach(([key, title, sub]) => {
-      purposeWrap.appendChild(optionButton(
-        `<div class="opt-title">${title}</div><div class="opt-sub" style="text-transform:none;letter-spacing:0;font-family:var(--sans);font-size:0.78rem;color:var(--mid-grey);">${sub}</div>`,
-        toggles.purpose === key,
-        () => { toggles.purpose = key; renderResults(); }
-      ));
-    });
-
-    const hwWrap = document.getElementById('hardware-toggle');
-    hwWrap.innerHTML = '';
-    Object.entries(HW_ENCODERS).forEach(([key, info]) => {
-      hwWrap.appendChild(optionButton(
-        `<div class="opt-title" style="font-size:0.85rem;">${info.label}</div>`,
-        toggles.hardware === key,
-        () => { toggles.hardware = key; renderResults(); }
-      ));
-    });
-
-    const audioWrap = document.getElementById('audio-toggle');
-    audioWrap.innerHTML = '';
-    [
-      ['stereo', 'Stereo Downmix', 'AAC, fixed bitrate'],
-      ['passthrough', 'Passthrough', 'Keep original channels/codec'],
-    ].forEach(([key, title, sub]) => {
-      audioWrap.appendChild(optionButton(
-        `<div class="opt-title">${title}</div><div class="opt-sub" style="text-transform:none;letter-spacing:0;font-family:var(--sans);font-size:0.78rem;color:var(--mid-grey);">${sub}</div>`,
-        toggles.audio === key,
-        () => { toggles.audio = key; renderResults(); }
-      ));
-    });
-  }
-
   function renderResults() {
     currentSettings = computeSettings();
     renderSettingsGrid(currentSettings);
     document.getElementById('mockup-output').innerHTML = appMockupHTML(currentSettings);
-    renderToggles();
     document.getElementById('results').classList.remove('hidden');
     renderAnswerTrail();
     renderCalculator(currentSettings);
@@ -1341,9 +1241,9 @@
       `Resolution: ${s.resolution.label}`,
       `Framerate: ${fpsDisplay(s.fps)} (Constant Framerate / CFR)`,
       `Video Encoder: ${s.encoderLabel}`,
-      `Rate Control: ${s.isCRF ? 'Constant Quality (CRF/CQ)' : 'Average Bitrate (ABR), 2-pass recommended'}`,
-      s.isCRF ? `Quality: RF ${s.crf}` : `Video Bitrate: ${s.videoKbps} kbps`,
-      `Audio: ${s.isPassthrough ? 'Auto Passthrough (original channels/codec)' : `AAC, ${s.audioKbps} kbps, Stereo`}`,
+      `Rate Control: Average Bitrate (ABR), 2-pass recommended`,
+      `Video Bitrate: ${s.videoKbps} kbps`,
+      `Audio: Auto Passthrough (original channels/codec)`,
       `Encoder Speed Preset: ${s.presetSpeed}`,
     ].join('\n');
     navigator.clipboard.writeText(text).then(() => {
@@ -1363,21 +1263,15 @@
   function buildPresetJSON(s) {
     const fpsValue = (s.fps === FPS_SAME || s.fps === null) ? 'auto' : s.fps;
     const resSlug = `${s.resolution.w}x${s.resolution.h}`;
-    const presetName = `${s.tier.badge}-${resSlug}-${s.isCRF ? 'CRF' : 'ABR'}`;
+    const presetName = `${s.tier.badge}-${resSlug}-ABR`;
 
-    const audioBlock = s.isPassthrough
-      ? {
-          AudioBitrate: 160, AudioCompressionLevel: -1, AudioDitherMethod: 'auto',
-          AudioEncoder: 'copy:aac', AudioMixdown: 'none', AudioNormalizeMixLevel: false,
-          AudioSamplerate: 'auto', AudioTrackDRCSlider: 0, AudioTrackGainSlider: 0,
-          AudioTrackQuality: -1, AudioTrackQualityEnable: false,
-        }
-      : {
-          AudioBitrate: s.audioKbps, AudioCompressionLevel: -1, AudioDitherMethod: 'auto',
-          AudioEncoder: 'ca_aac', AudioMixdown: 'stereo', AudioNormalizeMixLevel: false,
-          AudioSamplerate: 'auto', AudioTrackDRCSlider: 0, AudioTrackGainSlider: 0,
-          AudioTrackQuality: -1, AudioTrackQualityEnable: false,
-        };
+    // Audio is always Auto Passthrough — original channels/codec untouched.
+    const audioBlock = {
+      AudioBitrate: 160, AudioCompressionLevel: -1, AudioDitherMethod: 'auto',
+      AudioEncoder: 'copy:aac', AudioMixdown: 'none', AudioNormalizeMixLevel: false,
+      AudioSamplerate: 'auto', AudioTrackDRCSlider: 0, AudioTrackGainSlider: 0,
+      AudioTrackQuality: -1, AudioTrackQualityEnable: false,
+    };
 
     return {
       PresetList: [{
@@ -1389,10 +1283,10 @@
         VideoEncoder: s.encoderId,
         VideoFramerateMode: 'cfr',
         VideoFramerate: fpsValue,
-        VideoQualityType: s.isCRF ? 1 : 2,
-        VideoQualitySlider: s.isCRF ? s.crf : 22,
-        VideoAvgBitrate: s.isCRF ? 4000 : s.videoKbps,
-        VideoMultiPass: !s.isCRF,
+        VideoQualityType: 2,
+        VideoQualitySlider: 22,
+        VideoAvgBitrate: s.videoKbps,
+        VideoMultiPass: true,
         VideoPreset: presetSpeedToHandbrakeId(s.presetSpeed),
         AudioList: [audioBlock],
       }],
@@ -1422,47 +1316,32 @@
     if (!s) return;
     const minutes = parseFloat(document.getElementById('duration-input').value) || 0;
 
+    // Audio is always Passthrough, so size is estimated from video bitrate
+    // alone — passthrough audio size is variable and excluded.
     const sizeBox = document.getElementById('filesize-stat-box');
-    if (s.isCRF) {
-      sizeBox.innerHTML = `
-        <p class="stat-label">Estimated File Size</p>
-        <p class="stat-value" style="font-size:1.1rem;">Not predictable under CRF</p>
-        <p class="stat-note">Constant Quality targets a perceptual quality level, not a bitrate — output size depends on source content complexity and can't be estimated in advance.</p>
-      `;
-    } else {
-      const seconds = minutes * 60;
-      const effectiveKbps = s.isPassthrough ? s.videoKbps : (s.videoKbps + s.audioKbps);
-      const totalMB = ((effectiveKbps / 8) * seconds) / 1024;
-      sizeBox.innerHTML = `
-        <p class="stat-label">Estimated File Size</p>
-        <p id="filesize-output" class="stat-value">${minutes > 0 ? fmtBytes(totalMB) : '—'}</p>
-        <p class="stat-note">${s.isPassthrough ? 'Video bitrate only — passthrough audio size is variable and excluded.' : '(video + audio bitrate) ÷ 8 × duration'}</p>
-      `;
-    }
+    const seconds = minutes * 60;
+    const totalMB = ((s.videoKbps / 8) * seconds) / 1024;
+    sizeBox.innerHTML = `
+      <p class="stat-label">Estimated File Size</p>
+      <p id="filesize-output" class="stat-value">${minutes > 0 ? fmtBytes(totalMB) : '—'}</p>
+      <p class="stat-note">Video bitrate only — passthrough audio size is variable and excluded.</p>
+    `;
 
     const timeBox = document.getElementById('time-stat-box');
-    if (s.hardwareKey === 'x264') {
-      const multiplier = PROCESSING_MULTIPLIER[s.bucket];
-      const estMinutes = minutes * multiplier;
-      let timeStr = '—';
-      if (minutes > 0) {
-        if (estMinutes < 1) timeStr = Math.round(estMinutes * 60) + ' sec';
-        else if (estMinutes < 60) timeStr = estMinutes.toFixed(1) + ' min';
-        else timeStr = (estMinutes / 60).toFixed(1) + ' hr';
-        timeStr += ` (~${multiplier}x real-time)`;
-      }
-      timeBox.innerHTML = `
-        <p class="stat-label">Software Encoding ETA (x264)</p>
-        <p id="time-output" class="stat-value">${timeStr}</p>
-        <p class="stat-note">rough ETA on a modern CPU, software encode</p>
-      `;
-    } else {
-      timeBox.innerHTML = `
-        <p class="stat-label">Software Encoding ETA (x264)</p>
-        <p class="stat-value" style="font-size:1.1rem;">N/A — hardware encoding selected</p>
-        <p class="stat-note">${HW_ENCODERS[s.hardwareKey].label} will be substantially faster than the x264 software estimate would suggest — we don't have reliable per-hardware multiplier data to show a number here.</p>
-      `;
+    const multiplier = PROCESSING_MULTIPLIER[s.bucket];
+    const estMinutes = minutes * multiplier;
+    let timeStr = '—';
+    if (minutes > 0) {
+      if (estMinutes < 1) timeStr = Math.round(estMinutes * 60) + ' sec';
+      else if (estMinutes < 60) timeStr = estMinutes.toFixed(1) + ' min';
+      else timeStr = (estMinutes / 60).toFixed(1) + ' hr';
+      timeStr += ` (~${multiplier}x real-time)`;
     }
+    timeBox.innerHTML = `
+      <p class="stat-label">Software Encoding ETA (x264)</p>
+      <p id="time-output" class="stat-value">${timeStr}</p>
+      <p class="stat-note">rough ETA on a modern CPU, software encode</p>
+    `;
   }
 
   document.getElementById('duration-input').addEventListener('input', () => renderCalculator(currentSettings));
@@ -1473,20 +1352,20 @@
       {
         badge: 'High', title: 'High Quality',
         sub: 'Source resolution kept — larger files, slowest encode',
-        lines: ['Resolution: Source (e.g. 1920×1080 or 3840×2160)', 'Video Bitrate: 14,000 kbps (1080p) / 40,000 kbps (4K)', 'Codec: H.264, ABR, 2-pass', 'Framerate: Source fps, CFR', 'Audio: AAC 192 kbps'],
-        mockup: { fps: 'Source', videoKbps: 14000, audioKbps: 192, presetSpeed: 'Slower', isCRF: false, isPassthrough: false, crf: 18, encoderLabel: 'H.264 (x264) — Software' },
+        lines: ['Resolution: Source (e.g. 1920×1080 or 3840×2160)', 'Video Bitrate: 14,000 kbps (1080p) / 40,000 kbps (4K)', 'Codec: H.264, ABR, 2-pass', 'Framerate: Source fps, CFR', 'Audio: Auto Passthrough'],
+        mockup: { fps: 'Source', videoKbps: 14000, presetSpeed: 'Slower' },
       },
       {
         badge: 'Mid', title: 'Balanced',
         sub: '4K source downscaled to 1080p — everyday editing footage',
-        lines: ['Resolution: 1920×1080', 'Video Bitrate: 8,000 kbps', 'Codec: H.264, ABR, 2-pass', 'Framerate: Source fps, CFR', 'Audio: AAC 160 kbps'],
-        mockup: { fps: 'Source', videoKbps: 8000, audioKbps: 160, presetSpeed: 'Medium', isCRF: false, isPassthrough: false, crf: 21, encoderLabel: 'H.264 (x264) — Software' },
+        lines: ['Resolution: 1920×1080', 'Video Bitrate: 8,000 kbps', 'Codec: H.264, ABR, 2-pass', 'Framerate: Source fps, CFR', 'Audio: Auto Passthrough'],
+        mockup: { fps: 'Source', videoKbps: 8000, presetSpeed: 'Medium' },
       },
       {
         badge: 'Low', title: 'Small',
         sub: '4K source downscaled to 720p — extreme space-saving only',
-        lines: ['Resolution: 1280×720', 'Video Bitrate: 3,000 kbps', 'Codec: H.264, ABR, 2-pass', 'Framerate: Source fps, CFR', 'Audio: AAC 128 kbps'],
-        mockup: { fps: 'Source', videoKbps: 3000, audioKbps: 128, presetSpeed: 'Fast', isCRF: false, isPassthrough: false, crf: 24, encoderLabel: 'H.264 (x264) — Software' },
+        lines: ['Resolution: 1280×720', 'Video Bitrate: 3,000 kbps', 'Codec: H.264, ABR, 2-pass', 'Framerate: Source fps, CFR', 'Audio: Auto Passthrough'],
+        mockup: { fps: 'Source', videoKbps: 3000, presetSpeed: 'Fast' },
       },
     ];
     const wrap = document.getElementById('preset-cards');
