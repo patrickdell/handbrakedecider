@@ -3,6 +3,12 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<!-- No external resources are loaded anywhere in this page — CSP locks
+     fetchable content to same-origin and permits only the inline style/
+     script blocks already on the page. -->
+<!-- frame-ancestors can't be set via <meta> (HTTP-header-only directive) —
+     omitted here rather than left in to silently no-op. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; form-action 'none'; object-src 'none';" />
 <title>Handbrake Configuration Wizard</title>
 <style>
   /*
@@ -1246,12 +1252,15 @@
       `Audio: Auto Passthrough (original channels/codec)`,
       `Encoder Speed Preset: ${s.presetSpeed}`,
     ].join('\n');
+    const btn = document.getElementById('copy-settings');
+    const original = btn.textContent;
     navigator.clipboard.writeText(text).then(() => {
-      const btn = document.getElementById('copy-settings');
-      const original = btn.textContent;
       btn.textContent = 'Copied!';
       btn.classList.add('is-success');
       setTimeout(() => { btn.textContent = original; btn.classList.remove('is-success'); }, 1500);
+    }).catch(() => {
+      btn.textContent = 'Copy failed — select text manually';
+      setTimeout(() => { btn.textContent = original; }, 2000);
     });
   });
 
